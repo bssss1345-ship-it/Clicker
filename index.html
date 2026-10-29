@@ -727,7 +727,7 @@
     <div class="panel">
       <button class="close" id="close-trades">×</button>
       <h2>Обмен</h2>
-      <p class="sub">Алмазы и эффекты (Снег, Дождь, Цифры) можно передавать другим игрокам</p>
+      <p class="sub">Алмазы и эффекты (Снег, Дождь, Цифры, Шестерёнки, Деньги, Улыбки и другие) можно передавать другим игрокам</p>
       <div class="tabs">
         <button class="tab active" data-tab="incoming">Входящие<span class="cnt" id="cnt-in" hidden></span></button>
         <button class="tab" data-tab="new">Новый обмен</button>
@@ -914,7 +914,7 @@
       });
     })();
     const CASE_IDS = EFFECT_IDS.filter(id => EFFECTS[id].chance);
-    const TRADE_IDS = ['snow', 'rain', 'digits', 'clover', 'shapes', 'goldrain'];
+    const TRADE_IDS = ['snow', 'rain', 'digits', 'clover', 'shapes', 'goldrain', 'gears', 'money', 'smile'];
 
     // награды за время в игре (время в секундах); выдаёт их сервер
     const RESET_MS = 2 * 60 * 60 * 1000; // награды сбрасываются каждые 2 часа
