@@ -805,6 +805,10 @@
           </select>
           <select id="new-effect" hidden>
           </select>
+          <select id="new-case" hidden>
+            <option value="">📦 Ящик эффектов</option>
+            <option value="gear">⚙️ Ящик механизмов</option>
+          </select>
           <input id="new-amount" type="number" min="1" value="10" title="Количество">
         </div>
         <div class="tr-section">Сколько игроков могут активировать (0 — без ограничений)</div>
@@ -2488,7 +2492,7 @@
       const $ = id => document.getElementById(id);
       const modal = $('codes-modal'), input = $('code-input'), submit = $('code-submit'), msgEl = $('code-msg');
       const tabsEl = $('codes-tabs'), paneRedeem = $('codes-redeem'), paneCreate = $('codes-create');
-      const newCode = $('new-code'), newType = $('new-type'), newEffect = $('new-effect');
+      const newCode = $('new-code'), newType = $('new-type'), newEffect = $('new-effect'), newCase = $('new-case');
       const newAmount = $('new-amount'), newMax = $('new-max'), listEl = $('codes-list');
 
       function rewardLabel(type, amount, effect) {
@@ -2496,7 +2500,8 @@
           const e = EFFECTS[effect];
           return (e ? e.icon + ' ' + e.name : '✨ Эффект') + (amount > 1 ? ' ×' + amount : '');
         }
-        return ({ diamonds: '💎 Алмазы: ' + amount, clicks: '🖱️ Клики: ' + amount, cases: '📦 Ящики: ' + amount })[type] || type;
+        if (type === 'cases') return (effect === 'gear' ? '⚙️ Ящики механизмов: ' : '📦 Ящики эффектов: ') + amount;
+        return ({ diamonds: '💎 Алмазы: ' + amount, clicks: '🖱️ Клики: ' + amount })[type] || type;
       }
       function tallyText(t) {
         return Object.entries(t).map(([id, n]) => (EFFECTS[id] ? EFFECTS[id].icon + ' ' + EFFECTS[id].name : id) + ' ×' + n).join(', ');
@@ -2546,7 +2551,10 @@
       }
 
       // ---------- создание кодов (TestBot) ----------
-      newType.addEventListener('change', () => { newEffect.hidden = newType.value !== 'effect'; });
+      newType.addEventListener('change', () => {
+        newEffect.hidden = newType.value !== 'effect';
+        newCase.hidden = newType.value !== 'cases';
+      });
       newCode.addEventListener('input', () => { newCode.value = newCode.value.replace(/[^A-Za-z0-9_-]/g, ''); });
 
       function randomCode() {
@@ -2563,7 +2571,8 @@
         if (!(maxUses >= 0)) { toast('Лимит активаций: 0 или больше'); return; }
         const res = await call('create_code', {
           p_code: code, p_type: newType.value, p_amount: amount,
-          p_effect: newType.value === 'effect' ? newEffect.value : null, p_max_uses: maxUses
+          p_effect: newType.value === 'effect' ? newEffect.value : (newType.value === 'cases' && newCase.value ? newCase.value : null),
+          p_max_uses: maxUses
         });
         if (!res.ok) { toast(errText(res.error)); return; }
         newCode.value = '';
