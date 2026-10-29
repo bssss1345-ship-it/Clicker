@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d9622b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Кликер">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Кликер</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --btn: #d9622b;
+    --text: #2b2b2b;
+    --btn-text: #ffffff;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #fx {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+  }
+  #cps {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 6;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(128, 128, 128, 0.15);
+    font-size: 18px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  #boost {
+    position: fixed;
+    top: 64px;
+    left: 16px;
+    z-index: 6;
+    display: none;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: #ffb52e;
+    color: #2b2b2b;
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  #boost.show { display: block; }
+  #diamonds {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 6;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(128, 128, 128, 0.15);
+    font-size: 18px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  #namebar {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+  }
+  #namebar > .name-label,
+  #namebar .name-row {
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(128, 128, 128, 0.15);
+  }
+  #namebar .name-row { display: flex; gap: 8px; padding: 6px; }
+  #namebar input {
+    width: 140px;
+    font: inherit;
+    padding: 6px 10px;
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #namebar button {
+    font: inherit;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--btn);
+    color: var(--btn-text);
+    cursor: pointer;
+  }
+  #namebar button:disabled { opacity: 0.4; cursor: not-allowed; }
+  #namebar .name-err { font-size: 13px; font-weight: 500; color: #d93025; text-align: center; }
+  @media (max-width: 600px) {
+    #namebar > .name-label {
+      max-width: 34vw; box-sizing: border-box; overflow: hidden;
+      white-space: nowrap; text-overflow: ellipsis;
+      padding: 9px 10px; font-size: 14px;
+    }
+  }
+  .menu-btn.ready::after { content: '●'; color: #ff4d4d; margin-left: 8px; }
+  #counter {
+    font-size: 96px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  #click {
+    font-size: 28px;
+    padding: 24px 56px;
+    border: none;
+    border-radius: 16px;
+    background: var(--btn);
+    color: var(--btn-text);
+    cursor: pointer;
+    box-shadow: 0 6px 0 color-mix(in srgb, var(--btn) 70%, black);
+    transition: transform 0.05s, box-shadow 0.05s;
+    user-select: none;
+  }
+  #click:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 color-mix(in srgb, var(--btn) 70%, black);
+  }
+  #menu-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .menu-btn {
+    font: inherit;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 10px;
+    background: var(--text);
+    color: var(--bg);
+    cursor: pointer;
+  }
+  #shop {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(360px, 90vw);
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(128, 128, 128, 0.15);
+  }
+  .item button {
+    font: inherit;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--text);
+    color: var(--bg);
+    cursor: pointer;
+  }
+  .item button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .item input[type="color"] {
+    width: 48px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  /* ---------- модальные окна ---------- */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 16px;
+    box-sizing: border-box;
+  }
+  .modal.open { display: flex; }
+  .panel {
+    position: relative;
+    width: min(760px, 100%);
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 24px;
+    border-radius: 16px;
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+  #cases-modal .panel { width: min(1200px, 96vw); }
+  .panel h2 { margin: 0 0 4px; }
+  .panel .sub { margin: 0 0 16px; opacity: 0.7; font-variant-numeric: tabular-nums; }
+  .close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+  .close:disabled { opacity: 0.2; cursor: not-allowed; }
+
+  /* ящик */
+  .case-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(128, 128, 128, 0.15);
+  }
+  .case-icon { font-size: 56px; }
+  .case-icon { flex: none; }
+  .case-info { flex: 1; min-width: 0; }
+  .case-info b { font-size: 18px; }
+  .chances {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 14px;
+    opacity: 0.8;
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+  .chances span { white-space: nowrap; }
+  .case-info .primary { margin-top: 14px; }
+  .primary {
+    flex: none;
+    white-space: nowrap;
+    font: inherit;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--btn);
+    color: var(--btn-text);
+    cursor: pointer;
+  }
+  .primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* рулетка */
+  #roulette-wrap { display: none; margin-top: 18px; }
+  #roulette-wrap.show { display: block; }
+  #roulette {
+    position: relative;
+    overflow: hidden;
+    height: 150px;
+    border-radius: 12px;
+    background: #14161c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  #roulette::before, #roulette::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 80px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  #roulette::before { left: 0; background: linear-gradient(90deg, #14161c, transparent); }
+  #roulette::after { right: 0; background: linear-gradient(270deg, #14161c, transparent); }
+  #pointer {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 3px;
+    margin-left: -1.5px;
+    background: #ffd23f;
+    box-shadow: 0 0 10px #ffd23f;
+    z-index: 3;
+  }
+  #strip {
+    display: flex;
+    gap: 8px;
+    height: 100%;
+    align-items: center;
+    will-change: transform;
+  }
+  .drop {
+    flex: 0 0 116px;
+    height: 128px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    background: linear-gradient(180deg, #2a2e3a, #1c1f28);
+    border-bottom: 4px solid var(--rc);
+    box-shadow: inset 0 -30px 40px -30px var(--rc);
+  }
+  .drop .ic { font-size: 40px; }
+  .drop .nm { font-size: 14px; }
+  #result {
+    min-height: 28px;
+    margin-top: 14px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  /* инвентарь */
+  #inv-list { display: flex; flex-direction: column; gap: 10px; }
+  .inv-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(128, 128, 128, 0.15);
+    border-left: 5px solid var(--rc);
+  }
+  .inv-item .ic { font-size: 32px; }
+  .inv-item .nm { flex: 1; }
+  .inv-item .nm small { display: block; opacity: 0.65; }
+  .inv-item button {
+    font: inherit;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--text);
+    color: var(--bg);
+  }
+  .inv-item button.on { background: var(--btn); color: var(--btn-text); }
+  .inv-item .acts { display: flex; flex-direction: column; gap: 6px; }
+  .inv-item button.del { background: rgba(200, 60, 60, 0.85); color: #fff; font-size: 0.85em; padding: 6px 12px; }
+  .empty { opacity: 0.6; text-align: center; padding: 24px 0; }
+
+  /* награды */
+  #rewards-list { display: flex; flex-direction: column; gap: 10px; }
+  .reward {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(128, 128, 128, 0.15);
+  }
+  .reward .ic { font-size: 32px; flex: none; }
+  .reward .info { flex: 1; min-width: 0; }
+  .reward .info small { display: block; opacity: 0.65; }
+  .reward .bar {
+    height: 6px;
+    margin-top: 8px;
+    border-radius: 3px;
+    background: rgba(128, 128, 128, 0.3);
+    overflow: hidden;
+  }
+  .reward .bar i { display: block; height: 100%; background: var(--btn); }
+  .reward .primary { min-width: 110px; }
+  .reward.done { opacity: 0.55; }
+
+  /* ---------- вход / подключение ---------- */
+  #gate { z-index: 30; background: var(--bg); }
+  #gate .panel { width: min(420px, 100%); text-align: center; box-shadow: none; }
+  #gate input {
+    width: 100%; box-sizing: border-box; font: inherit; padding: 10px 12px; margin: 8px 0;
+    border: 1px solid rgba(128,128,128,0.5); border-radius: 10px;
+    background: var(--bg); color: var(--text); text-align: center;
+  }
+  #gate .gate-err { min-height: 20px; color: #d93025; font-size: 14px; margin-bottom: 8px; }
+  #gate p { opacity: 0.75; margin: 6px 0 12px; line-height: 1.4; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 24px; z-index: 40;
+    transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+    max-width: min(440px, 92vw); padding: 12px 18px; border-radius: 12px;
+    background: var(--text); color: var(--bg); font-weight: 600; text-align: center;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- обмен ---------- */
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab {
+    font: inherit; padding: 8px 14px; border: none; border-radius: 10px; cursor: pointer;
+    background: rgba(128,128,128,0.15); color: var(--text);
+  }
+  .tab.active { background: var(--btn); color: var(--btn-text); }
+  .tr-section { margin: 14px 0 6px; font-weight: 700; }
+  .tr-hint { font-size: 13px; opacity: 0.65; margin: 4px 0 10px; line-height: 1.4; }
+  .tr-row {
+    display: flex; align-items: center; gap: 12px; padding: 8px 12px; margin-bottom: 6px;
+    border-radius: 10px; background: rgba(128,128,128,0.15);
+  }
+  .tr-row .ic { font-size: 24px; flex: none; }
+  .tr-row .nm { flex: 1; min-width: 0; }
+  .tr-row .nm small { display: block; opacity: 0.65; }
+  .tr-row input, #tr-to {
+    font: inherit; padding: 6px 10px; border-radius: 8px; box-sizing: border-box;
+    border: 1px solid rgba(128,128,128,0.5); background: var(--bg); color: var(--text);
+  }
+  .tr-row input { width: 90px; text-align: right; }
+  #tr-to { width: 100%; padding: 10px 12px; }
+  #tr-send { margin-top: 12px; width: 100%; }
+  .tr-card {
+    padding: 14px 16px; margin-bottom: 10px; border-radius: 12px;
+    background: rgba(128,128,128,0.15);
+  }
+  .tr-card .head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .tr-card .when { font-size: 12px; opacity: 0.6; }
+  .tr-card .line { margin-top: 6px; line-height: 1.4; }
+  .tr-card .line span { opacity: 0.65; }
+  .tr-card .btns { display: flex; gap: 8px; margin-top: 12px; }
+  .tr-card .btns .primary { flex: 1; }
+  .primary.alt { background: var(--text); color: var(--bg); }
+  .badge-st { font-size: 13px; font-weight: 700; }
+  .badge-st.accepted { color: #1e9e55; }
+  .badge-st.declined, .badge-st.cancelled { color: #d93025; }
+  .tab .cnt { margin-left: 6px; padding: 1px 7px; border-radius: 9px; background: #ff4d4d; color: #fff; font-size: 12px; }
+  /* рейтинг */
+  #lb-list { display: flex; flex-direction: column; gap: 8px; }
+  .lb-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(128, 128, 128, 0.15);
+    font-variant-numeric: tabular-nums;
+  }
+  .lb-row .rk { width: 40px; flex: none; font-size: 20px; font-weight: 700; text-align: center; }
+  .lb-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .lb-row .val { font-weight: 700; }
+  .lb-row.me { background: var(--btn); color: var(--btn-text); }
+  .lb-sep { text-align: center; opacity: 0.5; line-height: 1; }
+  #click:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 color-mix(in srgb, var(--btn) 70%, black);
+  }
+
+  /* ---------- коды ---------- */
+  [hidden] { display: none !important; }
+  #codes-modal input, #codes-modal select {
+    font: inherit; padding: 10px 12px; box-sizing: border-box;
+    border: 1px solid rgba(128, 128, 128, 0.5); border-radius: 8px;
+    background: var(--bg); color: var(--text);
+  }
+  .code-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .code-row input, .code-row select { flex: 1; min-width: 0; }
+  #code-input, #new-code { text-transform: uppercase; letter-spacing: 2px; }
+  #new-max { width: 100%; }
+  #code-msg { margin-top: 12px; min-height: 1.4em; font-weight: 600; }
+  #code-msg.err { color: #d93025; }
+  .code-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 8px; border-radius: 10px; background: rgba(128, 128, 128, 0.15); }
+  .code-item .ci { flex: 1; min-width: 0; }
+  .code-item b { font-family: monospace; font-size: 16px; cursor: pointer; }
+  .code-item small { display: block; opacity: 0.7; }
+  .code-item button { font: inherit; padding: 6px 12px; border: none; border-radius: 8px; background: #d93025; color: #fff; cursor: pointer; }
+  /* исследование игрока */
+  .in-row { display: flex; gap: 8px; }
+  .in-row input {
+    flex: 1; min-width: 0; font: inherit; padding: 10px 12px; box-sizing: border-box;
+    border: 1px solid rgba(128, 128, 128, 0.5); border-radius: 8px;
+    background: var(--bg); color: var(--text);
+  }
+  #in-result { margin-top: 16px; }
+  .in-head { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .in-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .in-stat { padding: 10px 12px; border-radius: 12px; background: rgba(128,128,128,0.15); text-align: center; }
+  .in-stat small { display: block; opacity: 0.65; margin-bottom: 4px; }
+  .in-stat b { font-size: 18px; font-variant-numeric: tabular-nums; }
+  @media (max-width: 520px) { .in-stats { grid-template-columns: 1fr; } }
+
+  /* ---------- Баттл пасс ---------- */
+  #emeralds {
+    position: fixed;
+    top: 62px;
+    right: 16px;
+    z-index: 6;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(128, 128, 128, 0.15);
+    font-size: 18px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  .emr {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+    background: linear-gradient(135deg, #9dffbc, #14c060 55%, #06803c);
+    clip-path: polygon(50% 0, 100% 35%, 80% 100%, 20% 100%, 0 35%);
+  }
+  #open-bp { grid-column: 1 / -1; }
+  .bp-panel { width: min(900px, 98vw); padding: 20px 16px 16px; }
+  .bp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-right: 34px; }
+  .bp-title { font-size: 20px; font-weight: 600; }
+  .bp-lvl { font-size: 14px; opacity: 0.7; font-variant-numeric: tabular-nums; }
+  .bp-lvl::before { content: 'Уровень '; }
+  .bp-bar { margin: 10px 0 14px; }
+  .bp-trk { height: 6px; border-radius: 3px; background: rgba(128, 128, 128, 0.25); overflow: hidden; }
+  .bp-fill { height: 100%; width: 0; background: var(--btn); transition: width 0.4s; }
+  .bp-note { font-size: 12px; opacity: 0.6; margin: -4px 0 10px; min-height: 1em; }
+  .bp-bar span { display: block; margin-top: 6px; font-size: 12px; opacity: 0.6; }
+  .bp-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .bp-btn {
+    font: inherit; font-size: 14px; color: inherit; cursor: pointer;
+    padding: 8px 14px; background: transparent;
+    border: 1px solid rgba(128, 128, 128, 0.4); border-radius: 10px;
+  }
+  .bp-btn.gold { background: var(--btn); color: var(--btn-text); border-color: transparent; }
+  .bp-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  #bp-track {
+    display: flex; overflow-x: auto; padding: 2px 0 8px;
+    scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
+  }
+  .bp-side {
+    position: sticky; left: 0; z-index: 2; flex: none; width: 52px;
+    display: flex; flex-direction: column; gap: 6px; padding: 4px 6px 4px 0;
+    background: var(--bg);
+  }
+  .bp-side .sp { height: 22px; }
+  .bp-side .lab {
+    height: 56px; box-sizing: border-box; display: grid; place-items: center; text-align: center;
+    font-size: 9px; line-height: 1.2; letter-spacing: 0.4px; opacity: 0.6;
+  }
+  .bp-col {
+    flex: none; width: 64px; display: flex; flex-direction: column; align-items: center;
+    gap: 6px; padding: 4px; scroll-snap-align: start; box-sizing: border-box;
+  }
+  .bp-col.cur { background: rgba(128, 128, 128, 0.12); border-radius: 10px; }
+  .bp-num { height: 22px; display: grid; place-items: center; font-size: 12px; opacity: 0.5; font-variant-numeric: tabular-nums; }
+  .bp-num.done { opacity: 1; font-weight: 700; }
+  .bp-tile {
+    position: relative; width: 56px; height: 56px; box-sizing: border-box;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+    border: 1px solid rgba(128, 128, 128, 0.35); border-radius: 10px;
+    background: rgba(128, 128, 128, 0.08);
+  }
+  .bp-tile.prem { border-color: color-mix(in srgb, var(--btn) 60%, transparent); }
+  .bp-tile .emr { font-size: 20px; }
+  .bp-tile .bp-fx { font-size: 22px; line-height: 1; }
+  .bp-tile.locked { opacity: 0.45; }
+  .bp-tile.claimed { opacity: 0.4; }
+  .bp-tile.ready { cursor: pointer; background: var(--btn); color: var(--btn-text); border-color: transparent; }
+  .bp-tile .mark {
+    position: absolute; inset: 0; display: grid; place-items: center; font-size: 18px;
+    background: rgba(128, 128, 128, 0.35); border-radius: 9px; font-weight: 400;
+  }
+
+  /* ---------- аккаунт ---------- */
+  #acct-modal input {
+    flex: 1; min-width: 0; font: inherit; padding: 10px 12px; box-sizing: border-box;
+    border: 1px solid rgba(128, 128, 128, 0.5); border-radius: 8px;
+    background: var(--bg); color: var(--text);
+  }
+  #acct-msg { margin-top: 12px; min-height: 1.4em; font-weight: 600; word-break: break-word; }
+  #acct-msg.err { color: #d93025; }
+</style>
+</head>
+<body>
+  <canvas id="fx"></canvas>
+
+  <div id="cps">CPS: 0.0</div>
+  <div id="namebar"></div>
+  <div id="boost"></div>
+  <div id="diamonds">💎 0</div>
+  <div id="emeralds"><span class="emr"></span> 0</div>
+  <div id="counter">0</div>
+  <button id="click">Нажми</button>
+
+  <div id="menu-buttons">
+    <button class="menu-btn" id="open-bp">⭐ Баттл пасс</button>
+    <button class="menu-btn" id="open-cases">📦 Ящики</button>
+    <button class="menu-btn" id="open-inv">🎒 Инвентарь</button>
+    <button class="menu-btn" id="open-rewards">🎁 Награды</button>
+    <button class="menu-btn" id="open-dshop">💎 Магазин</button>
+    <button class="menu-btn" id="open-trades">🔁 Обмен</button>
+    <button class="menu-btn" id="open-lb">🏆 Рейтинг</button>
+    <button class="menu-btn" id="open-inspect">🔍 Исследовать</button>
+    <button class="menu-btn" id="open-codes">🔑 Коды</button>
+    <button class="menu-btn" id="open-acct">👤 Аккаунт</button>
+  </div>
+
+  <div id="shop">
+    <div class="item">
+      <span>Цвет кнопки</span>
+      <span id="btn-ctrl"></span>
+    </div>
+    <div class="item">
+      <span>Цвет фона</span>
+      <span id="bg-ctrl"></span>
+    </div>
+  </div>
+
+  <!-- меню ящиков -->
+  <div class="modal" id="cases-modal">
+    <div class="panel">
+      <button class="close" id="close-cases">×</button>
+      <h2>Ящики</h2>
+      <p class="sub">Баланс: <span id="cases-balance">0</span></p>
+
+      <div class="case-card">
+        <div class="case-icon">📦</div>
+        <div class="case-info">
+          <b>Ящик эффектов</b>
+          <div class="chances">
+            <span>❄️ Снег — 60%</span>
+            <span>🌧️ Дождь — 30%</span>
+            <span>🔢 Цифры — 10%</span>
+          </div>
+          <button class="primary" id="open-case-btn"></button>
+        </div>
+      </div>
+
+      <div class="case-card" style="margin-top:12px">
+        <div class="case-icon">🧰</div>
+        <div class="case-info">
+          <b>Ящик механизмов</b>
+          <div class="chances">
+            <span>⚙️ Шестерёнки — 70%</span>
+            <span>💵 Деньги — 29%</span>
+            <span>😄 Улыбки — 1%</span>
+          </div>
+          <button class="primary" id="open-case-gear-btn"></button>
+        </div>
+      </div>
+
+      <div id="roulette-wrap">
+        <div id="roulette">
+          <div id="pointer"></div>
+          <div id="strip"></div>
+        </div>
+        <div id="result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- магазин алмазов -->
+  <div class="modal" id="dshop-modal">
+    <div class="panel">
+      <button class="close" id="close-dshop">×</button>
+      <h2>Магазин алмазов</h2>
+      <p class="sub">Баланс: <span id="dshop-balance">0</span> 💎 · За клик сейчас: <span id="dshop-power">1</span></p>
+      <div id="dshop-list"></div>
+    </div>
+  </div>
+
+  <!-- баттл пасс -->
+  <div class="modal" id="bp-modal">
+    <div class="panel bp-panel">
+      <button class="close" id="close-bp">×</button>
+      <div class="bp-head">
+        <div class="bp-title" id="bp-title">Баттл пасс</div>
+        <div class="bp-lvl" id="bp-lvl">0</div>
+      </div>
+      <div class="bp-bar"><div class="bp-trk"><div class="bp-fill" id="bp-fill"></div></div><span id="bp-bar-text"></span></div>
+      <div class="bp-actions">
+        <button class="bp-btn gold" id="bp-buy"></button>
+        <button class="bp-btn green" id="bp-all"></button>
+      </div>
+      <div class="bp-note" id="bp-note"></div>
+      <div id="bp-track"></div>
+    </div>
+  </div>
+
+  <!-- награды -->
+  <div class="modal" id="rewards-modal">
+    <div class="panel">
+      <button class="close" id="close-rewards">×</button>
+      <h2>Награды за время</h2>
+      <p class="sub">Время в игре: <span id="playtime">0:00</span><br>Сброс наград через: <span id="reset-in">2:00:00</span></p>
+      <div id="rewards-list"></div>
+    </div>
+  </div>
+
+  <!-- инвентарь -->
+  <div class="modal" id="inv-modal">
+    <div class="panel">
+      <button class="close" id="close-inv">×</button>
+      <h2>Инвентарь</h2>
+      <p class="sub">Эффекты можно включать одновременно</p>
+      <div id="inv-list"></div>
+    </div>
+  </div>
+
+  <!-- обмен -->
+  <div class="modal" id="trades-modal">
+    <div class="panel">
+      <button class="close" id="close-trades">×</button>
+      <h2>Обмен</h2>
+      <p class="sub">Алмазы и эффекты (Снег, Дождь, Цифры, Шестерёнки, Деньги, Улыбки и другие) можно передавать другим игрокам</p>
+      <div class="tabs">
+        <button class="tab active" data-tab="incoming">Входящие<span class="cnt" id="cnt-in" hidden></span></button>
+        <button class="tab" data-tab="new">Новый обмен</button>
+        <button class="tab" data-tab="mine">Мои обмены</button>
+      </div>
+      <div id="tr-incoming"></div>
+      <div id="tr-new" hidden>
+        <input id="tr-to" type="text" maxlength="16" placeholder="Имя игрока" autocomplete="off" spellcheck="false">
+        <div class="tr-section">Вы отдаёте</div>
+        <div id="tr-give"></div>
+        <div class="tr-section">Вы хотите получить взамен</div>
+        <div class="tr-hint">Оставьте нули — получится подарок. Предложенное вами замораживается до ответа и вернётся при отмене или отказе.</div>
+        <div id="tr-want"></div>
+        <button class="primary" id="tr-send">Отправить предложение</button>
+      </div>
+      <div id="tr-mine" hidden></div>
+    </div>
+  </div>
+
+  <!-- рейтинг -->
+  <div class="modal" id="lb-modal">
+    <div class="panel">
+      <button class="close" id="close-lb">×</button>
+      <h2>Рейтинг игроков</h2>
+      <p class="sub" id="lb-sub">Топ-50 среди всех игроков</p>
+      <div class="tabs">
+        <button class="tab active" data-lb="count">🖱️ По кликам</button>
+        <button class="tab" data-lb="time">⏱️ По времени в игре</button>
+      </div>
+      <div id="lb-list"></div>
+    </div>
+  </div>
+
+  <!-- исследование игрока -->
+  <div class="modal" id="inspect-modal">
+    <div class="panel" style="width:min(520px,100%)">
+      <button class="close" id="close-inspect">×</button>
+      <h2>Исследовать игрока</h2>
+      <p class="sub">Введите имя игрока, чтобы узнать о нём подробности</p>
+      <div class="in-row">
+        <input id="in-name" type="text" maxlength="16" placeholder="Имя игрока" autocomplete="off" spellcheck="false">
+        <button class="primary" id="in-go">Найти</button>
+      </div>
+      <div id="in-result"></div>
+    </div>
+  </div>
+
+  <!-- коды -->
+  <div class="modal" id="codes-modal">
+    <div class="panel" style="width:min(520px,100%)">
+      <button class="close" id="close-codes">×</button>
+      <h2>Коды</h2>
+      <p class="sub">Введите код, чтобы получить награду</p>
+      <div class="tabs" id="codes-tabs" hidden>
+        <button class="tab active" data-ctab="redeem">Ввести код</button>
+        <button class="tab" data-ctab="create">Создать код</button>
+      </div>
+      <div id="codes-redeem">
+        <div class="code-row">
+          <input id="code-input" type="text" maxlength="32" placeholder="Введите код" autocomplete="off" spellcheck="false">
+          <button class="primary" id="code-submit">Активировать</button>
+        </div>
+        <div id="code-msg"></div>
+      </div>
+      <div id="codes-create" hidden>
+        <div class="tr-section">Код</div>
+        <input id="new-code" type="text" maxlength="32" placeholder="Пусто — создастся случайный" autocomplete="off" spellcheck="false" style="width:100%">
+        <div class="tr-section">Награда</div>
+        <div class="code-row">
+          <select id="new-type">
+            <option value="diamonds">💎 Алмазы</option>
+            <option value="clicks">🖱️ Клики</option>
+            <option value="cases">📦 Ящики</option>
+            <option value="effect">✨ Эффект</option>
+          </select>
+          <select id="new-effect" hidden>
+          </select>
+          <select id="new-case" hidden>
+            <option value="">📦 Ящик эффектов</option>
+            <option value="gear">⚙️ Ящик механизмов</option>
+          </select>
+          <input id="new-amount" type="number" min="1" value="10" title="Количество">
+        </div>
+        <div class="tr-section">Сколько игроков могут активировать (0 — без ограничений)</div>
+        <input id="new-max" type="number" min="0" value="1">
+        <button class="primary" id="code-create" style="margin-top:14px">Создать код</button>
+        <div class="tr-section">Созданные коды</div>
+        <div id="codes-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- аккаунт -->
+  <div class="modal" id="acct-modal" style="z-index:35">
+    <div class="panel" style="width:min(520px,100%)">
+      <button class="close" id="close-acct">×</button>
+      <h2>Аккаунт</h2>
+      <p class="sub">Перенос аккаунта на другое устройство или в другой браузер</p>
+      <div id="acct-export">
+        <div class="tr-section">Код входа в этот аккаунт</div>
+        <div class="tr-hint">Сохраните код, чтобы позже войти в этот аккаунт с другого устройства. Никому его не показывайте: по нему можно полностью управлять аккаунтом.</div>
+        <div class="code-row">
+          <input id="acct-code-out" type="text" readonly placeholder="Нажмите «Показать код»">
+          <button class="primary" id="acct-show">Показать код</button>
+        </div>
+      </div>
+      <div class="tr-section">Войти в другой аккаунт</div>
+      <div class="tr-hint">Вставьте код входа из нужного аккаунта. Текущий аккаунт на этом устройстве будет заменён.</div>
+      <div class="code-row">
+        <input id="acct-code-in" type="text" placeholder="Код входа" autocomplete="off" spellcheck="false">
+        <button class="primary" id="acct-login">Войти</button>
+      </div>
+      <div id="acct-msg"></div>
+    </div>
+  </div>
+
+  <!-- подключение / регистрация -->
+  <div class="modal open" id="gate">
+    <div class="panel">
+      <h2 id="gate-title">Подключение…</h2>
+      <p id="gate-text"></p>
+      <div id="gate-body"></div>
+    </div>
+  </div>
+
+  <!-- антиавтокликер -->
+  <div class="modal" id="ac-modal" style="z-index:50">
+    <div class="panel" style="width:min(420px,100%);text-align:center">
+      <button class="close" id="close-ac">×</button>
+      <h2>⚠️ Слишком быстро!</h2>
+      <p style="line-height:1.5">Мы заметили более 16 кликов в секунду. Пожалуйста, <b>отключите автокликер</b>.</p>
+      <p class="sub">Кнопка заблокирована на <span id="ac-left">1:00</span></p>
+      <button class="primary" id="ac-ok">Понятно</button>
+    </div>
+  </div>
+
+  <!-- принудительное обновление -->
+  <div class="modal" id="update-modal" style="z-index:100">
+    <div class="panel" style="width:min(420px,100%);text-align:center">
+      <h2>🔄 Доступно обновление</h2>
+      <p style="line-height:1.5">Вышла новая версия игры. Чтобы продолжить, нужно обновить страницу. Ваш прогресс сохранён.</p>
+      <button class="primary" id="update-btn">Обновить</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script>
+    const KEY = 'clicker-state';
+    const COST_BTN = 100;
+    const COST_BG = 200;
+    const CASE_COST = 250;
+
+    // ВАШ ПРОЕКТ SUPABASE (публичный ключ — его можно держать в браузере)
+    const SUPABASE_URL = 'https://vffxqhtqnpmlmepwusbb.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_wToFmSHwU3SFBSQrmYWHRw_ZbS5Ve86';
+
+    // эффекты и шансы выпадения (сумма = 100); сами выпадения считает сервер
+    const EFFECTS = {
+      snow:   { name: 'Снег',   icon: '❄️', color: '#4b9bff', chance: 60 },
+      rain:   { name: 'Дождь',  icon: '🌧️', color: '#a35cff', chance: 30 },
+      digits: { name: 'Цифры',  icon: '🔢', color: '#ffb52e', chance: 10 },
+      clock:  { name: 'Часы',   icon: '🕒', color: '#ffd23f' }, // только за награду, не передаётся
+      clover: { name: 'Клевер', icon: '🍀', color: '#2ecc71' }, // шанс 0,01% при каждом клике, можно передавать
+      gears:  { name: 'Шестерёнки', icon: '⚙️', color: '#9aa5b1' }, // из «Ящика механизмов»
+      money:  { name: 'Деньги',     icon: '💵', color: '#3fbf6b' },
+      smile:  { name: 'Улыбки',      icon: '😄', color: '#ffcc33' },
+      shapes:   { name: 'Геометрия',      icon: '🔷', color: '#59b8ff', bp: true }, // награда 30 ур. бесплатного пасса
+      goldrain: { name: 'Золотой дождь',  icon: '🟡', color: '#ffc400', bp: true }  // награда 30 ур. премиум пасса
+    };
+    const BP_EFFECT_LVL = 30; // уровень, на котором выдаются эффекты баттл пасса
+    const BP_EFFECT_FREE = 'shapes', BP_EFFECT_PREM = 'goldrain';
+    // ящики: цена, серверная функция и шансы (сумма = 100)
+    const CASES = {
+      effects: { cost: 250, rpc: 'open_case', chances: { snow: 60, rain: 30, digits: 10 } },
+      gear:    { cost: 500, rpc: 'open_case_gear', chances: { gears: 70, money: 29, smile: 1 } }
+    };
+    const CLOVER_CHANCE = 0.0001; // 0,01%
+    const EFFECT_IDS = Object.keys(EFFECTS);
+    (function () {
+      const ne = document.getElementById('new-effect');
+      if (!ne) return;
+      EFFECT_IDS.forEach(id => {
+        const o = document.createElement('option');
+        o.value = id; o.textContent = EFFECTS[id].icon + ' ' + EFFECTS[id].name;
+        ne.appendChild(o);
+      });
+    })();
+    const CASE_IDS = EFFECT_IDS.filter(id => EFFECTS[id].chance);
+    const TRADE_IDS = ['snow', 'rain', 'digits', 'clover', 'shapes', 'goldrain', 'gears', 'money', 'smile'];
+
+    // награды за время в игре (время в секундах); выдаёт их сервер
+    const RESET_MS = 2 * 60 * 60 * 1000; // награды сбрасываются каждые 2 часа
+    const REWARDS = [
+      { id: 'r1', time: 5 * 60,  icon: '💎', name: '10 алмазов' },
+      { id: 'r2', time: 10 * 60, icon: '💎', name: '15 алмазов' },
+      { id: 'r3', time: 15 * 60, icon: '⚡', name: 'Буст ×2 на 3 минуты' },
+      { id: 'r4', time: 20 * 60, icon: '🕒', name: 'Эффект «Часы»' }
+    ];
+
+    // Данные игры живут на сервере. Локально остаются только цвета и «надетые» эффекты.
+    const state = {
+      count: 0,
+      btnUnlocked: false,
+      bgUnlocked: false,
+      btnColor: '#d9622b',
+      bgColor: '#f4f1ea',
+      inventory: { snow: 0, rain: 0, digits: 0, clock: 0, clover: 0, gears: 0, money: 0, smile: 0, shapes: 0, goldrain: 0 },
+      equipped: { snow: false, rain: false, digits: false, clock: false, clover: false, gears: false, money: false, smile: false, shapes: false, goldrain: false },
+      diamonds: 0,
+      emeralds: 0,
+      bpClicks: 0,
+      bpPremium: false,
+      bpFree: 0,
+      bpPrem: 0,
+      playTime: 0,
+      claimed: { r1: false, r2: false, r3: false, r4: false },
+      boostUntil: 0,
+      playerName: '',
+      clickBonus: 0,
+      rewardsReset: 0
+    };
+
+    // старое локальное сохранение — нужно только для разового переноса на сервер
+    let legacy = null;
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY));
+      if (saved) {
+        legacy = saved;
+        if (typeof saved.btnColor === 'string') state.btnColor = saved.btnColor;
+        if (typeof saved.bgColor === 'string') state.bgColor = saved.bgColor;
+        if (saved.equipped) state.equipped = Object.assign(state.equipped, saved.equipped);
+      } else {
+        const oldCount = parseInt(localStorage.getItem('clicker-count'), 10) || 0;
+        if (oldCount) legacy = { count: oldCount };
+      }
+    } catch (e) {}
+
+    function save() {
+      try {
+        let cur = {};
+        try { cur = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+        cur.btnColor = state.btnColor;
+        cur.bgColor = state.bgColor;
+        cur.equipped = state.equipped;
+        localStorage.setItem(KEY, JSON.stringify(cur));
+      } catch (e) {}
+    }
+    // после успешного переноса удаляем старые игровые данные из браузера
+    function clearLegacy() {
+      legacy = null;
+      try {
+        localStorage.setItem(KEY, JSON.stringify({
+          btnColor: state.btnColor, bgColor: state.bgColor, equipped: state.equipped, migrated: true
+        }));
+        localStorage.removeItem('clicker-count');
+      } catch (e) {}
+    }
+
+    // чёрный или белый текст в зависимости от яркости цвета
+    function luma(hex) {
+      const n = parseInt(hex.slice(1), 16);
+      const r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+      return 0.299 * r + 0.587 * g + 0.114 * b;
+    }
+    function textOn(hex) {
+      return luma(hex) > 150 ? '#2b2b2b' : '#ffffff';
+    }
+
+    const root = document.documentElement.style;
+    const counter = document.getElementById('counter');
+    const btnCtrl = document.getElementById('btn-ctrl');
+    const bgCtrl = document.getElementById('bg-ctrl');
+
+    function colorPicker(value, onChange) {
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = value;
+      input.addEventListener('input', () => onChange(input.value));
+      return input;
+    }
+
+    function buyButton(cost, onBuy) {
+      const b = document.createElement('button');
+      b.textContent = 'Купить за ' + cost;
+      b.disabled = state.count < cost;
+      b.addEventListener('click', onBuy);
+      return b;
+    }
+
+    function applyColors() {
+      root.setProperty('--btn', state.btnColor);
+      root.setProperty('--btn-text', textOn(state.btnColor));
+      root.setProperty('--bg', state.bgColor);
+      root.setProperty('--text', textOn(state.bgColor));
+    }
+
+    // Элементы управления создаются один раз и дальше только обновляются: render() вызывается
+    // при каждом ответе сервера, и пересоздание <input type="color"> закрывало открытое окно выбора цвета.
+    function syncCtrl(host, unlocked, color, setColor, cost, onBuy) {
+      let el = host.firstElementChild;
+      if (unlocked) {
+        if (!(el && el.tagName === 'INPUT')) {
+          el = colorPicker(color, setColor);
+          host.replaceChildren(el);
+        } else if (document.activeElement !== el && el.value !== color) {
+          el.value = color;
+        }
+      } else {
+        if (!(el && el.tagName === 'BUTTON')) {
+          el = buyButton(cost, onBuy);
+          host.replaceChildren(el);
+        }
+        el.disabled = state.count < cost;
+      }
+    }
+
+    function renderShop() {
+      syncCtrl(btnCtrl, state.btnUnlocked, state.btnColor,
+        c => { state.btnColor = c; applyColors(); save(); }, COST_BTN, () => buyColor('btn'));
+      syncCtrl(bgCtrl, state.bgUnlocked, state.bgColor,
+        c => { state.bgColor = c; applyColors(); save(); }, COST_BG, () => buyColor('bg'));
+    }
+
+    function render() {
+      counter.textContent = state.count;
+      updateDiamonds();
+      applyColors();
+      renderShop();
+      renderCasesUI();
+    }
+
+    // ---------- CPS (клики за последнюю секунду) ----------
+    const cpsEl = document.getElementById('cps');
+    let clickTimes = [];
+    function updateCps() {
+      const now = performance.now();
+      clickTimes = clickTimes.filter(t => now - t <= 1000);
+      cpsEl.textContent = 'CPS: ' + clickTimes.length.toFixed(1);
+    }
+    setInterval(updateCps, 100);
+
+    // ---------- звук клика (синтезируется, без файлов) ----------
+    let audioCtx = null;
+    function playClick() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(700 + Math.random() * 60, t);
+        osc.frequency.exponentialRampToValueAtTime(280, t + 0.07);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.25, t + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.1);
+      } catch (e) {}
+    }
+
+    // ---------- защита от автокликера ----------
+    const MAX_CPS = 16;
+    const LOCK_MS = 60 * 1000;
+    const LOCK_KEY = 'clicker-lock-until';
+    const clickBtn = document.getElementById('click');
+    const acModal = document.getElementById('ac-modal');
+    const acLeft = document.getElementById('ac-left');
+    let lockUntil = 0;
+    try { lockUntil = parseInt(localStorage.getItem(LOCK_KEY), 10) || 0; } catch (e) {}
+
+    function lockLeft() { return Math.max(0, lockUntil - Date.now()); }
+
+    function updateLock() {
+      const left = lockLeft();
+      if (left > 0) {
+        clickBtn.disabled = true;
+        clickBtn.textContent = '🔒 ' + fmt(left / 1000);
+        acLeft.textContent = fmt(left / 1000);
+      } else if (clickBtn.disabled) {
+        clickBtn.disabled = false;
+        clickBtn.textContent = 'Нажми';
+        acModal.classList.remove('open');
+        try { localStorage.removeItem(LOCK_KEY); } catch (e) {}
+      }
+    }
+    setInterval(updateLock, 250);
+
+    function lockClicker() {
+      lockUntil = Date.now() + LOCK_MS;
+      try { localStorage.setItem(LOCK_KEY, String(lockUntil)); } catch (e) {}
+      clickTimes = [];
+      updateCps();
+      updateLock();
+      acModal.classList.add('open');
+    }
+    document.getElementById('close-ac').addEventListener('click', () => acModal.classList.remove('open'));
+    document.getElementById('ac-ok').addEventListener('click', () => acModal.classList.remove('open'));
+    acModal.addEventListener('mousedown', e => { if (e.target === acModal) acModal.classList.remove('open'); });
+
+    clickBtn.addEventListener('click', () => {
+      if (lockLeft() > 0) return;
+      const now = performance.now();
+      clickTimes = clickTimes.filter(t => now - t <= 1000);
+      clickTimes.push(now);
+      if (clickTimes.length > MAX_CPS) { lockClicker(); return; }
+      playClick();
+      updateCps();
+      const before = state.count;
+      state.count += clickPower();
+      counter.textContent = state.count;
+      if (Math.random() < CLOVER_CHANCE) grantClover();
+      // перерисовываем магазин только когда меняется доступность покупок
+      const crossed = c => before < c && state.count >= c;
+      const needsRefresh =
+        (!state.btnUnlocked && crossed(COST_BTN)) ||
+        (!state.bgUnlocked && crossed(COST_BG));
+      if (needsRefresh) renderShop();
+    });
+
+    // ======================= ЯЩИКИ =======================
+    const casesModal = document.getElementById('cases-modal');
+    const invModal = document.getElementById('inv-modal');
+    const openCaseBtn = document.getElementById('open-case-btn');
+    const openCaseGearBtn = document.getElementById('open-case-gear-btn');
+    const closeCasesBtn = document.getElementById('close-cases');
+    const rouletteWrap = document.getElementById('roulette-wrap');
+    const roulette = document.getElementById('roulette');
+    const strip = document.getElementById('strip');
+    const resultEl = document.getElementById('result');
+    const balanceEl = document.getElementById('cases-balance');
+
+    const ITEM_W = 116, GAP = 8, STEP = ITEM_W + GAP;
+    const STRIP_LEN = 60, WIN_INDEX = 52;
+    const SPIN_MS = 6500;
+    let spinning = false;
+
+    function rollEffect(caseId) {
+      const ch = CASES[caseId || 'effects'].chances;
+      const ids = Object.keys(ch);
+      let r = Math.random() * 100;
+      for (const id of ids) {
+        r -= ch[id];
+        if (r < 0) return id;
+      }
+      return ids[0];
+    }
+
+    function makeDrop(id) {
+      const e = EFFECTS[id] || { name: id, icon: '✨', color: '#888' };
+      const d = document.createElement('div');
+      d.className = 'drop';
+      d.style.setProperty('--rc', e.color);
+      d.innerHTML = '<div class="ic">' + e.icon + '</div><div class="nm">' + e.name + '</div>';
+      return d;
+    }
+
+    function renderCasesUI() {
+      balanceEl.textContent = state.count;
+      openCaseBtn.textContent = 'Открыть за ' + CASES.effects.cost;
+      openCaseBtn.disabled = spinning || state.count < CASES.effects.cost;
+      openCaseGearBtn.textContent = 'Открыть за ' + CASES.gear.cost;
+      openCaseGearBtn.disabled = spinning || state.count < CASES.gear.cost;
+      closeCasesBtn.disabled = spinning;
+    }
+
+    let caseBusy = false;
+    async function openCase(caseId) {
+      const cfg = CASES[caseId];
+      if (spinning || caseBusy || state.count < cfg.cost) return;
+
+      // сервер сам списывает цену и бросает кубик
+      caseBusy = true;
+      spinning = true;
+      resultEl.textContent = '';
+      renderCasesUI();
+      const sent = state.count;
+      const invBefore = Object.assign({}, state.inventory);
+      const res = await call(cfg.rpc, { p_count: sent });
+      caseBusy = false;
+      if (!res.ok) {
+        spinning = false;
+        if (res.state) applyServer(res.state, sent);
+        renderCasesUI();
+        toast(errText(res.error));
+        return;
+      }
+      const winId = res.win;
+      applyServer(res.state, sent);
+
+      // диагностика: сервер должен был добавить выигрыш в инвентарь
+      if ((state.inventory[winId] || 0) <= (invBefore[winId] || 0)) {
+        setTimeout(() => toast('⚠ Сервер не добавил «' + winId + '» в инвентарь. Инвентарь с сервера: ' + JSON.stringify(res.state && res.state.inventory)), SPIN_MS + 400);
+      }
+
+      counter.textContent = state.count;
+      renderShop();
+      renderCasesUI();
+
+      // собираем ленту
+      strip.style.transition = 'none';
+      strip.style.transform = 'translateX(0)';
+      strip.replaceChildren();
+      for (let i = 0; i < STRIP_LEN; i++) {
+        strip.appendChild(makeDrop(i === WIN_INDEX ? winId : rollEffect(caseId)));
+      }
+      rouletteWrap.classList.add('show');
+      // на телефоне рулетка ниже карточек ящиков — прокручиваем окно к ней
+      try { rouletteWrap.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+      void strip.offsetWidth; // сброс анимации
+
+      const vw = roulette.clientWidth;
+      const jitter = (Math.random() - 0.5) * (ITEM_W * 0.8);
+      const target = WIN_INDEX * STEP + ITEM_W / 2 - vw / 2 + jitter;
+
+      strip.style.transition = 'transform ' + SPIN_MS + 'ms cubic-bezier(0.08, 0.6, 0.12, 1)';
+      strip.style.transform = 'translateX(' + (-target) + 'px)';
+
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        spinning = false;
+        const e = EFFECTS[winId] || { name: winId, icon: '✨', color: '#888' };
+        resultEl.style.color = e.color;
+        resultEl.textContent = 'Выпало: ' + e.icon + ' ' + e.name + '!';
+        renderCasesUI();
+        renderInventory();
+      };
+      strip.addEventListener('transitionend', finish, { once: true });
+      setTimeout(finish, SPIN_MS + 300);
+    }
+
+    openCaseBtn.addEventListener('click', () => openCase('effects'));
+    openCaseGearBtn.addEventListener('click', () => openCase('gear'));
+
+    document.getElementById('open-cases').addEventListener('click', () => {
+      resultEl.textContent = '';
+      rouletteWrap.classList.remove('show');
+      renderCasesUI();
+      casesModal.classList.add('open');
+    });
+    closeCasesBtn.addEventListener('click', () => {
+      if (spinning) return;
+      casesModal.classList.remove('open');
+    });
+    casesModal.addEventListener('mousedown', e => {
+      if (e.target === casesModal && !spinning) casesModal.classList.remove('open');
+    });
+
+    // ======================= ИНВЕНТАРЬ =======================
+    const invList = document.getElementById('inv-list');
+
+    const EFFECT_REMOVE_REWARD = 100; // награда в кликах за удаление одного эффекта (должна совпадать с SQL-функцией remove_effect)
+
+    // сервер сам убирает 1 шт. эффекта и начисляет клики
+    async function removeEffect(id) {
+      if (actBusy || !(state.inventory[id] > 0)) return;
+      const e = EFFECTS[id] || { name: id };
+      if (!confirm('Удалить «' + e.name + '»? Вы получите ' + EFFECT_REMOVE_REWARD + ' кликов.')) return;
+      actBusy = true;
+      const sent = state.count;
+      const res = await call('remove_effect', { p_effect: id, p_count: sent });
+      actBusy = false;
+      if (res.ok) {
+        applyServer(res.state, sent);
+        if (!(state.inventory[id] > 0)) { state.equipped[id] = false; save(); updateEffects(); renderInventory(); }
+        toast('Эффект удалён: +' + EFFECT_REMOVE_REWARD + ' кликов');
+      } else {
+        if (res.state) applyServer(res.state, sent);
+        toast(errText(res.error));
+      }
+    }
+
+    function renderInventory() {
+      invList.replaceChildren();
+      const owned = Object.keys(state.inventory).filter(id => state.inventory[id] > 0);
+      if (!owned.length) {
+        const p = document.createElement('div');
+        p.className = 'empty';
+        p.textContent = 'Пока пусто. Откройте ящик или получите эффект в обмене.';
+        invList.appendChild(p);
+        return;
+      }
+      owned.forEach(id => {
+        const e = EFFECTS[id] || { name: id, icon: '✨', color: '#888' };
+        const row = document.createElement('div');
+        row.className = 'inv-item';
+        row.style.setProperty('--rc', e.color);
+
+        const ic = document.createElement('div');
+        ic.className = 'ic';
+        ic.textContent = e.icon;
+
+        const nm = document.createElement('div');
+        nm.className = 'nm';
+        nm.innerHTML = '<b></b><small></small>';
+        nm.firstChild.textContent = e.name + (state.inventory[id] > 1 ? ' ×' + state.inventory[id] : '');
+        nm.lastChild.textContent = state.equipped[id] ? 'Надето' : 'Не надето';
+
+        const btn = document.createElement('button');
+        btn.textContent = state.equipped[id] ? 'Снять' : 'Надеть';
+        if (state.equipped[id]) btn.className = 'on';
+        btn.addEventListener('click', () => {
+          state.equipped[id] = !state.equipped[id];
+          save();
+          renderInventory();
+          updateEffects();
+        });
+
+        const del = document.createElement('button');
+        del.className = 'del';
+        del.textContent = 'Удалить +' + EFFECT_REMOVE_REWARD;
+        del.addEventListener('click', () => removeEffect(id));
+
+        const acts = document.createElement('div');
+        acts.className = 'acts';
+        acts.append(btn, del);
+
+        row.append(ic, nm, acts);
+        invList.appendChild(row);
+      });
+    }
+
+    document.getElementById('open-inv').addEventListener('click', () => {
+      renderInventory();
+      invModal.classList.add('open');
+    });
+    document.getElementById('close-inv').addEventListener('click', () => invModal.classList.remove('open'));
+    invModal.addEventListener('mousedown', e => {
+      if (e.target === invModal) invModal.classList.remove('open');
+    });
+
+    // ======================= НАГРАДЫ =======================
+    const rewardsModal = document.getElementById('rewards-modal');
+    const rewardsList = document.getElementById('rewards-list');
+    const rewardsBtn = document.getElementById('open-rewards');
+    const playtimeEl = document.getElementById('playtime');
+    const diamondsEl = document.getElementById('diamonds');
+    const boostEl = document.getElementById('boost');
+
+    function fmt(sec) {
+      sec = Math.max(0, Math.ceil(sec));
+      return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    }
+    function fmtLong(sec) {
+      sec = Math.max(0, Math.ceil(sec));
+      const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+      return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+    function boostActive() { return Date.now() < state.boostUntil; }
+
+    // сброс наград каждые 2 часа делает сервер; здесь только запрашиваем обновление
+    function checkRewardsReset() {
+      if (ready && state.rewardsReset && Date.now() >= state.rewardsReset + 500 && !document.hidden) {
+        doHeartbeat();
+      }
+      updateRewardsBadge();
+    }
+
+    function updateDiamonds() { diamondsEl.textContent = '💎 ' + state.diamonds; }
+
+    function updateBoostUI() {
+      if (boostActive()) {
+        boostEl.textContent = '⚡ ×2 — ' + fmt((state.boostUntil - Date.now()) / 1000);
+        boostEl.classList.add('show');
+      } else {
+        boostEl.classList.remove('show');
+      }
+    }
+
+    function updateRewardsBadge() {
+      const ready = REWARDS.some(r => !state.claimed[r.id] && state.playTime >= r.time);
+      rewardsBtn.classList.toggle('ready', ready);
+    }
+
+    function renderRewards() {
+      playtimeEl.textContent = fmt(state.playTime);
+      document.getElementById('reset-in').textContent = fmtLong((state.rewardsReset - Date.now()) / 1000);
+      rewardsList.replaceChildren();
+      REWARDS.forEach(r => {
+        const done = state.claimed[r.id];
+        const ready = !done && state.playTime >= r.time;
+
+        const row = document.createElement('div');
+        row.className = 'reward' + (done ? ' done' : '');
+
+        const ic = document.createElement('div');
+        ic.className = 'ic';
+        ic.textContent = r.icon;
+
+        const info = document.createElement('div');
+        info.className = 'info';
+        const title = document.createElement('b');
+        title.textContent = r.name;
+        const small = document.createElement('small');
+        small.textContent = 'За ' + (r.time / 60) + ' мин в игре';
+        info.append(title, small);
+        if (!done && !ready) {
+          const bar = document.createElement('div');
+          bar.className = 'bar';
+          const fill = document.createElement('i');
+          fill.style.width = Math.min(100, state.playTime / r.time * 100) + '%';
+          bar.appendChild(fill);
+          info.appendChild(bar);
+        }
+
+        const btn = document.createElement('button');
+        btn.className = 'primary';
+        btn.disabled = !ready;
+        btn.textContent = done ? 'Получено' : ready ? 'Забрать' : 'Ещё ' + fmt(r.time - state.playTime);
+        btn.addEventListener('click', async () => {
+          if (state.claimed[r.id] || state.playTime < r.time) return;
+          btn.disabled = true;
+          const res = await call('claim_reward', { p_id: r.id });
+          if (res.ok) applyServer(res.state);
+          else { toast(errText(res.error)); doHeartbeat(); }
+          renderRewards();
+        });
+
+        row.append(ic, info, btn);
+        rewardsList.appendChild(row);
+      });
+    }
+
+    // игровое время идёт, только пока вкладка открыта и видна
+    setInterval(() => {
+      if (!ready) return;
+      if (!document.hidden) {
+        state.playTime += 1;
+        if (Date.now() - lastHb >= 5000) doHeartbeat();
+      }
+      checkRewardsReset();
+      updateBoostUI();
+      if (rewardsModal.classList.contains('open')) renderRewards();
+      if (dshopModal.classList.contains('open')) renderDiamondShop();
+    }, 1000);
+    function flushCount() {
+      if (ready && sb) { try { sb.rpc('sync_count', { p_count: state.count }); } catch (e) {} }
+    }
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { save(); flushCount(); } });
+    window.addEventListener('pagehide', () => { save(); flushCount(); });
+
+    rewardsBtn.addEventListener('click', () => {
+      renderRewards();
+      rewardsModal.classList.add('open');
+    });
+    document.getElementById('close-rewards').addEventListener('click', () => rewardsModal.classList.remove('open'));
+    rewardsModal.addEventListener('mousedown', e => {
+      if (e.target === rewardsModal) rewardsModal.classList.remove('open');
+    });
+
+    // ======================= МАГАЗИН АЛМАЗОВ =======================
+    const BONUS_COST = 75, BONUS_MAX = 10;
+    const BOOST_COST = 25, SHOP_BOOST_MS = 2 * 60 * 1000;
+
+    // базовый клик 1 + вечный бонус, всё это умножается ×2 при активном бусте
+    function clickPower() {
+      return (1 + state.clickBonus) * (boostActive() ? 2 : 1);
+    }
+
+    const dshopModal = document.getElementById('dshop-modal');
+    const dshopList = document.getElementById('dshop-list');
+
+    function shopRow(icon, title, desc, btnText, disabled, onBuy) {
+      const row = document.createElement('div');
+      row.className = 'reward';
+      const ic = document.createElement('div');
+      ic.className = 'ic';
+      ic.textContent = icon;
+      const info = document.createElement('div');
+      info.className = 'info';
+      const b = document.createElement('b');
+      b.textContent = title;
+      const small = document.createElement('small');
+      small.textContent = desc;
+      info.append(b, small);
+      const btn = document.createElement('button');
+      btn.className = 'primary';
+      btn.textContent = btnText;
+      btn.disabled = disabled;
+      btn.addEventListener('click', onBuy);
+      row.append(ic, info, btn);
+      return row;
+    }
+
+    function renderDiamondShop() {
+      document.getElementById('dshop-balance').textContent = state.diamonds;
+      document.getElementById('dshop-power').textContent = clickPower();
+      dshopList.replaceChildren();
+
+      const maxed = state.clickBonus >= BONUS_MAX;
+      dshopList.appendChild(shopRow(
+        '👆', 'Вечный буст +1 к клику',
+        'Куплено: ' + state.clickBonus + ' / ' + BONUS_MAX,
+        maxed ? 'Максимум' : 'Купить за ' + BONUS_COST + ' 💎',
+        maxed || state.diamonds < BONUS_COST,
+        () => serverBuy('buy_bonus')
+      ));
+
+      dshopList.appendChild(shopRow(
+        '⚡', 'Буст ×2 к кликам на 2 минуты',
+        boostActive()
+          ? 'Активен: ещё ' + fmt((state.boostUntil - Date.now()) / 1000) + ' (покупка продлит на 2 мин)'
+          : 'Можно покупать сколько угодно',
+        'Купить за ' + BOOST_COST + ' 💎',
+        state.diamonds < BOOST_COST,
+        () => serverBuy('buy_boost')
+      ));
+    }
+
+    document.getElementById('open-dshop').addEventListener('click', () => {
+      renderDiamondShop();
+      dshopModal.classList.add('open');
+    });
+    document.getElementById('close-dshop').addEventListener('click', () => dshopModal.classList.remove('open'));
+    dshopModal.addEventListener('mousedown', e => {
+      if (e.target === dshopModal) dshopModal.classList.remove('open');
+    });
+
+    // ======================= СЕТЬ И АККАУНТ =======================
+    let sb = null, myId = null, ready = false, lastHb = 0, hbBusy = false, actBusy = false;
+
+    const ERRORS = {
+      taken: 'Это имя уже занято', bad_name: 'От 3 до 16 символов: латиница, цифры и _',
+      already: 'Уже выполнено', not_registered: 'Аккаунт не найден, обновите страницу',
+      no_player: 'Игрок с таким именем не найден', self: 'Нельзя обмениваться с самим собой',
+      bad_item: 'Некорректный набор предметов', bad_amount: 'Некорректное количество',
+      empty_give: 'Нужно предложить хотя бы что-то', rate_limit: 'Лимит: не больше 10 обменов в час',
+      too_many: 'Не больше 5 активных исходящих обменов', not_enough: 'Не хватает ресурсов',
+      not_found: 'Обмен не найден', not_pending: 'Этот обмен уже закрыт', maxed: 'Достигнут максимум',
+      too_early: 'Ещё рано', no_effect: 'Такого эффекта нет в инвентаре', free_not_done: 'Сначала заберите все награды бесплатного пасса', network: 'Нет связи с сервером'
+    };
+    function errText(code) { return ERRORS[code] || ('Ошибка: ' + code); }
+
+    let toastTimer = 0;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+    }
+
+    // единая обёртка над RPC: всегда возвращает { ok, ... }
+    async function call(fn, args) {
+      try {
+        const { data, error } = await sb.rpc(fn, args || {});
+        if (error) return { ok: false, error: /not_registered/.test(error.message) ? 'not_registered' : (error.message || 'network') };
+        return data || { ok: false, error: 'network' };
+      } catch (e) {
+        return { ok: false, error: 'network' };
+      }
+    }
+
+    // принимаем данные сервера; sentCount — счёт, который мы отправляли вместе с запросом
+    function applyServer(s, sentCount) {
+      const firstLoad = !ready && !state.playerName;
+      state.diamonds = s.diamonds;
+      state.emeralds = s.emeralds || 0;
+      state.bpClicks = s.bp_clicks || 0;
+      state.bpPremium = !!s.bp_premium;
+      state.bpFree = s.bp_free || 0;
+      state.bpPrem = s.bp_prem || 0;
+      state.inventory = Object.assign({ snow: 0, rain: 0, digits: 0, clock: 0, clover: 0, gears: 0, money: 0, smile: 0 }, s.inventory);
+      state.btnUnlocked = s.btn_unlocked;
+      state.bgUnlocked = s.bg_unlocked;
+      state.clickBonus = s.click_bonus;
+      state.boostUntil = s.boost_left > 0 ? Date.now() + s.boost_left * 1000 : 0;
+      state.playTime = s.play_time;
+      state.claimed = Object.assign({ r1: false, r2: false, r3: false, r4: false }, s.claimed);
+      state.rewardsReset = Date.now() + s.reset_left * 1000;
+      state.playerName = s.name;
+      if (typeof sentCount === 'number') state.count = s.count + (state.count - sentCount);
+      else if (firstLoad) state.count = s.count;
+
+      render();
+      updateBoostUI();
+      updateRewardsBadge();
+      updateEffects();
+      updateTradeLimits();
+      if (invModal.classList.contains('open')) renderInventory();
+      if (rewardsModal.classList.contains('open')) renderRewards();
+      if (dshopModal.classList.contains('open')) renderDiamondShop();
+      try { renderBP(); } catch (e) {}
+    }
+
+    async function doHeartbeat() {
+      if (hbBusy || !ready) return;
+      hbBusy = true;
+      lastHb = Date.now();
+      const sent = state.count;
+      const res = await call('heartbeat', { p_count: sent });
+      hbBusy = false;
+      if (res.ok) applyServer(res.state, sent);
+    }
+
+    async function refreshState() {
+      const res = await call('get_state');
+      if (res.ok && res.state) applyServer(res.state);
+    }
+
+    async function buyColor(which) {
+      const cost = which === 'btn' ? COST_BTN : COST_BG;
+      if (actBusy || state.count < cost) return;
+      actBusy = true;
+      const sent = state.count;
+      const res = await call('buy_color', { p_which: which, p_count: sent });
+      actBusy = false;
+      if (res.ok) applyServer(res.state, sent);
+      else { if (res.state) applyServer(res.state, sent); toast(errText(res.error)); }
+    }
+
+    // выпал клевер: просим сервер записать его в инвентарь
+    async function grantClover() {
+      const res = await call('grant_clover');
+      if (res.ok) {
+        applyServer(res.state);
+        toast('🍀 Вам выпал эффект «Клевер»! Включите его в инвентаре');
+      } else {
+        toast('Клевер выпал, но сервер его не записал: ' + errText(res.error));
+      }
+    }
+
+    async function serverBuy(fn) {
+      if (actBusy) return;
+      actBusy = true;
+      const res = await call(fn);
+      actBusy = false;
+      if (res.ok) applyServer(res.state);
+      else toast(errText(res.error));
+    }
+
+    // ---------- экран подключения ----------
+    const gate = document.getElementById('gate');
+    function showGate(title, text, bodyEl) {
+      document.getElementById('gate-title').textContent = title;
+      document.getElementById('gate-text').textContent = text || '';
+      const body = document.getElementById('gate-body');
+      body.replaceChildren();
+      if (bodyEl) body.appendChild(bodyEl);
+      gate.classList.add('open');
+    }
+
+    function legacyPayload() {
+      const l = legacy || {};
+      return {
+        count: l.count || 0, diamonds: l.diamonds || 0, click_bonus: l.clickBonus || 0,
+        btn_unlocked: !!l.btnUnlocked, bg_unlocked: !!l.bgUnlocked, inventory: l.inventory || {}
+      };
+    }
+
+    function showRegister() {
+      const wrap = document.createElement('div');
+      const input = document.createElement('input');
+      input.type = 'text'; input.maxLength = 16; input.placeholder = 'Ваше имя';
+      input.autocomplete = 'off'; input.spellcheck = false;
+      if (legacy && typeof legacy.playerName === 'string' && NAME_RE.test(legacy.playerName)) input.value = legacy.playerName;
+      const err = document.createElement('div');
+      err.className = 'gate-err';
+      const btn = document.createElement('button');
+      btn.className = 'primary'; btn.textContent = 'Начать игру';
+
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/[^A-Za-z0-9_]/g, '');
+        err.textContent = '';
+      });
+      const submit = async () => {
+        if (btn.disabled) return;
+        const name = input.value;
+        if (!NAME_RE.test(name)) { err.textContent = errText('bad_name'); return; }
+        if (!confirm('Имя можно задать только один раз. Сохранить «' + name + '»?')) return;
+        btn.disabled = input.disabled = true;
+        const res = await call('register_player', { p_name: name, p_state: legacyPayload() });
+        if (!res.ok) {
+          btn.disabled = input.disabled = false;
+          err.textContent = errText(res.error);
+          return;
+        }
+        clearLegacy();
+        start(res.state);
+      };
+      btn.addEventListener('click', submit);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+      const have = document.createElement('button');
+      have.className = 'primary alt'; have.style.marginTop = '12px';
+      have.textContent = 'У меня уже есть аккаунт';
+      have.addEventListener('click', () => window.openAccount && window.openAccount());
+      wrap.append(input, err, btn, have);
+
+      const hasOld = legacy && (legacy.count || legacy.diamonds);
+      showGate('Придумайте имя', hasOld
+        ? 'Ваш прогресс из этого браузера будет перенесён на сервер.'
+        : 'По этому имени другие игроки смогут присылать вам обмены.', wrap);
+      input.focus();
+    }
+
+    function showRetry(message) {
+      const btn = document.createElement('button');
+      btn.className = 'primary'; btn.textContent = 'Повторить';
+      btn.addEventListener('click', boot);
+      showGate('Нет связи', message, btn);
+    }
+
+    async function boot() {
+      showGate('Подключение…', 'Связываемся с сервером');
+      try {
+        if (!window.supabase) throw new Error('Не загрузилась библиотека Supabase (проверьте интернет)');
+        if (!sb) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let { data: { session } } = await sb.auth.getSession();
+        if (!session) {
+          const r = await sb.auth.signInAnonymously();
+          if (r.error) throw r.error;
+          session = r.data.session;
+        }
+        myId = session.user.id;
+        const res = await call('get_state');
+        if (!res.ok) {
+          // сессия могла устареть — начинаем заново
+          if (/JWT|not_authenticated|violates foreign key/i.test(res.error || '')) await sb.auth.signOut();
+          throw new Error(res.error === 'network' ? 'Сервер недоступен' : res.error);
+        }
+        if (!res.state) { showRegister(); return; }
+        start(res.state);
+      } catch (e) {
+        showRetry(String(e && e.message || e));
+      }
+    }
+
+    function start(s) {
+      applyServer(s);
+      ready = true;
+      lastHb = Date.now();
+      gate.classList.remove('open');
+      renderName();
+      startTrades();
+    }
+
+    // ======================= ИМЯ ИГРОКА =======================
+    const nameBar = document.getElementById('namebar');
+    const NAME_RE = /^[A-Za-z0-9_]{3,16}$/;
+
+    function renderName() {
+      nameBar.replaceChildren();
+      if (!state.playerName) return;
+      const label = document.createElement('div');
+      label.className = 'name-label';
+      label.textContent = '👤 ' + state.playerName;
+      nameBar.appendChild(label);
+    }
+
+    // ======================= ОБМЕН =======================
+    const tradesModal = document.getElementById('trades-modal');
+    const trIncoming = document.getElementById('tr-incoming');
+    const trNew = document.getElementById('tr-new');
+    const trMine = document.getElementById('tr-mine');
+    const tradesBtn = document.getElementById('open-trades');
+    const giveInputs = {}, wantInputs = {}, giveHave = {};
+    let trades = [], tradeTab = 'incoming', knownIncoming = null, tradesChannel = null, tradeBusy = false;
+
+    function bundle(d, items) {
+      const parts = [];
+      if (d > 0) parts.push('💎 ' + d);
+      TRADE_IDS.forEach(id => {
+        const n = (items && items[id]) || 0;
+        if (n > 0) parts.push(EFFECTS[id].icon + ' ' + EFFECTS[id].name + ' ×' + n);
+      });
+      return parts.length ? parts.join(' · ') : 'ничего';
+    }
+
+    function tradeRow(label, icon, inputs, key, isGive) {
+      const row = document.createElement('div');
+      row.className = 'tr-row';
+      const ic = document.createElement('div'); ic.className = 'ic'; ic.textContent = icon;
+      const nm = document.createElement('div'); nm.className = 'nm';
+      const b = document.createElement('b'); b.textContent = label;
+      nm.appendChild(b);
+      const input = document.createElement('input');
+      input.type = 'number'; input.min = 0; input.step = 1; input.value = 0;
+      input.addEventListener('input', () => {
+        let n = Math.floor(Number(input.value)) || 0;
+        n = Math.max(0, Math.min(isGive ? (giveHave[key] || 0) : 100000, n));
+        if (String(n) !== input.value) input.value = n;
+      });
+      inputs[key] = input;
+      if (isGive) {
+        const small = document.createElement('small');
+        giveHave[key + ':label'] = small;
+        nm.appendChild(small);
+      }
+      row.append(ic, nm, input);
+      return row;
+    }
+
+    (function buildTradeForm() {
+      const give = document.getElementById('tr-give');
+      const want = document.getElementById('tr-want');
+      give.appendChild(tradeRow('Алмазы', '💎', giveInputs, 'd', true));
+      want.appendChild(tradeRow('Алмазы', '💎', wantInputs, 'd', false));
+      TRADE_IDS.forEach(id => {
+        give.appendChild(tradeRow(EFFECTS[id].name, EFFECTS[id].icon, giveInputs, id, true));
+        want.appendChild(tradeRow(EFFECTS[id].name, EFFECTS[id].icon, wantInputs, id, false));
+      });
+    })();
+
+    // обновляем «у вас: N» и ограничения по максимуму
+    function updateTradeLimits() {
+      giveHave.d = state.diamonds;
+      TRADE_IDS.forEach(id => { giveHave[id] = state.inventory[id] || 0; });
+      ['d'].concat(TRADE_IDS).forEach(k => {
+        const lab = giveHave[k + ':label'];
+        if (lab) lab.textContent = 'у вас: ' + giveHave[k];
+        const inp = giveInputs[k];
+        if (inp && Number(inp.value) > giveHave[k]) inp.value = giveHave[k];
+      });
+    }
+
+    function setTab(tab) {
+      tradeTab = tab;
+      document.querySelectorAll('#trades-modal .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      trIncoming.hidden = tab !== 'incoming';
+      trNew.hidden = tab !== 'new';
+      trMine.hidden = tab !== 'mine';
+      renderTradeLists();
+    }
+    document.querySelectorAll('#trades-modal .tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
+
+    function statusLabel(s) {
+      return { pending: 'Ожидает ответа', accepted: 'Принят', declined: 'Отклонён', cancelled: 'Отменён' }[s] || s;
+    }
+
+    function lineEl(label, text) {
+      const d = document.createElement('div');
+      d.className = 'line';
+      const s = document.createElement('span');
+      s.textContent = label + ' ';
+      d.append(s, document.createTextNode(text));
+      return d;
+    }
+
+    function canAfford(d, items) {
+      if (state.diamonds < d) return false;
+      return TRADE_IDS.every(id => (state.inventory[id] || 0) >= ((items && items[id]) || 0));
+    }
+
+    async function tradeAction(fn, id) {
+      if (tradeBusy) return;
+      tradeBusy = true;
+      const res = await call(fn, { p_id: id });
+      tradeBusy = false;
+      if (res.ok) {
+        applyServer(res.state);
+        toast(fn === 'accept_trade' ? 'Обмен выполнен!' : fn === 'decline_trade' ? 'Предложение отклонено' : 'Обмен отменён, предметы возвращены');
+      } else {
+        toast(errText(res.error));
+      }
+      loadTrades();
+    }
+
+    function tradeCard(t) {
+      const incoming = t.to_id === myId;
+      const card = document.createElement('div');
+      card.className = 'tr-card';
+
+      const head = document.createElement('div');
+      head.className = 'head';
+      const who = document.createElement('b');
+      who.textContent = incoming ? t.from_name + ' → вам' : 'Вы → ' + t.to_name;
+      const st = document.createElement('span');
+      st.className = 'badge-st ' + t.status;
+      st.textContent = statusLabel(t.status);
+      head.append(who, st);
+      card.appendChild(head);
+
+      const when = document.createElement('div');
+      when.className = 'when';
+      when.textContent = new Date(t.created_at).toLocaleString('ru-RU');
+      card.appendChild(when);
+
+      if (incoming) {
+        card.appendChild(lineEl('Вы получите:', bundle(t.give_diamonds, t.give_items)));
+        card.appendChild(lineEl('Вы отдадите:', bundle(t.want_diamonds, t.want_items)));
+      } else {
+        card.appendChild(lineEl('Вы отдаёте:', bundle(t.give_diamonds, t.give_items)));
+        card.appendChild(lineEl('Вы получите:', bundle(t.want_diamonds, t.want_items)));
+      }
+
+      if (t.status === 'pending') {
+        const btns = document.createElement('div');
+        btns.className = 'btns';
+        if (incoming) {
+          const ok = document.createElement('button');
+          ok.className = 'primary'; ok.textContent = 'Принять';
+          ok.disabled = !canAfford(t.want_diamonds, t.want_items);
+          if (ok.disabled) ok.title = 'Не хватает того, что просит отправитель';
+          ok.addEventListener('click', () => tradeAction('accept_trade', t.id));
+          const no = document.createElement('button');
+          no.className = 'primary alt'; no.textContent = 'Отклонить';
+          no.addEventListener('click', () => tradeAction('decline_trade', t.id));
+          btns.append(ok, no);
+        } else {
+          const cancel = document.createElement('button');
+          cancel.className = 'primary alt'; cancel.textContent = 'Отменить';
+          cancel.addEventListener('click', () => tradeAction('cancel_trade', t.id));
+          btns.appendChild(cancel);
+        }
+        card.appendChild(btns);
+      }
+      return card;
+    }
+
+    function emptyEl(text) {
+      const d = document.createElement('div');
+      d.className = 'empty';
+      d.textContent = text;
+      return d;
+    }
+
+    function renderTradeLists() {
+      const inc = trades.filter(t => t.to_id === myId && t.status === 'pending');
+      const cnt = document.getElementById('cnt-in');
+      cnt.hidden = inc.length === 0;
+      cnt.textContent = inc.length;
+      tradesBtn.classList.toggle('ready', inc.length > 0);
+
+      trIncoming.replaceChildren(...(inc.length ? inc.map(tradeCard) : [emptyEl('Входящих предложений нет')]));
+      const mine = trades.filter(t => !(t.to_id === myId && t.status === 'pending'));
+      trMine.replaceChildren(...(mine.length ? mine.map(tradeCard) : [emptyEl('Пока нет обменов')]));
+    }
+
+    async function loadTrades() {
+      if (!sb || !ready) return;
+      const { data, error } = await sb.from('trades').select('*').order('id', { ascending: false }).limit(40);
+      if (error || !data) return;
+      trades = data;
+      const incNow = new Set(data.filter(t => t.to_id === myId && t.status === 'pending').map(t => t.id));
+      if (knownIncoming) {
+        data.forEach(t => {
+          if (incNow.has(t.id) && !knownIncoming.has(t.id)) toast('Новое предложение обмена от ' + t.from_name);
+        });
+      }
+      knownIncoming = incNow;
+      renderTradeLists();
+    }
+
+    function startTrades() {
+      loadTrades();
+      if (tradesChannel) return;
+      tradesChannel = sb.channel('trades-feed')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'trades' }, () => {
+          loadTrades();
+          refreshState();
+        })
+        .subscribe();
+      // запасной вариант, если realtime недоступен
+      setInterval(() => { if (!document.hidden) loadTrades(); }, 20000);
+    }
+
+    document.getElementById('tr-send').addEventListener('click', async () => {
+      if (tradeBusy) return;
+      const to = document.getElementById('tr-to').value.trim();
+      if (!NAME_RE.test(to)) { toast('Введите имя игрока (латиница, цифры, _)'); return; }
+      const read = (inputs) => {
+        const items = {};
+        TRADE_IDS.forEach(id => { const n = Math.floor(Number(inputs[id].value)) || 0; if (n > 0) items[id] = n; });
+        return { d: Math.floor(Number(inputs.d.value)) || 0, items };
+      };
+      const g = read(giveInputs), w = read(wantInputs);
+      tradeBusy = true;
+      const res = await call('create_trade', {
+        p_to: to, p_give_d: g.d, p_give_items: g.items, p_want_d: w.d, p_want_items: w.items
+      });
+      tradeBusy = false;
+      if (!res.ok) { toast(errText(res.error)); return; }
+      applyServer(res.state);
+      Object.values(giveInputs).concat(Object.values(wantInputs)).forEach(i => { i.value = 0; });
+      toast('Предложение отправлено игроку ' + to);
+      await loadTrades();
+      setTab('mine');
+    });
+
+    tradesBtn.addEventListener('click', () => {
+      updateTradeLimits();
+      setTab(tradeTab);
+      loadTrades();
+      tradesModal.classList.add('open');
+    });
+    document.getElementById('close-trades').addEventListener('click', () => tradesModal.classList.remove('open'));
+    tradesModal.addEventListener('mousedown', e => {
+      if (e.target === tradesModal) tradesModal.classList.remove('open');
+    });
+
+    // ======================= ЭФФЕКТЫ =======================
+    const canvas = document.getElementById('fx');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, running = false;
+    let flakes = [], drops = [], digits = [], clocks = [], clovers = [], gearsP = [], moneyP = [], smilesP = [], shapesP = [], goldP = [];
+
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    function initParticles() {
+      flakes = Array.from({ length: 140 }, () => ({
+        x: rand(0, W), y: rand(0, H), r: rand(1.5, 4.5),
+        vy: rand(0.6, 1.8), ph: rand(0, Math.PI * 2), sw: rand(0.5, 1.5)
+      }));
+      drops = Array.from({ length: 160 }, () => ({
+        x: rand(0, W), y: rand(0, H), len: rand(12, 26), vy: rand(12, 20)
+      }));
+      clocks = Array.from({ length: 28 }, () => ({
+        x: rand(0, W), y: rand(0, H), r: rand(14, 30),
+        vy: rand(0.5, 1.4), a: rand(0, Math.PI * 2), spin: rand(0.02, 0.06)
+      }));
+      clovers = Array.from({ length: 30 }, () => ({
+        x: rand(0, W), y: rand(0, H), s: rand(18, 34),
+        vy: rand(0.6, 1.6), ph: rand(0, Math.PI * 2)
+      }));
+      gearsP = Array.from({ length: 26 }, () => ({
+        x: rand(0, W), y: rand(0, H), s: rand(20, 38),
+        vy: rand(0.6, 1.5), a: rand(0, Math.PI * 2), spin: rand(-0.04, 0.04)
+      }));
+      moneyP = Array.from({ length: 30 }, () => ({
+        x: rand(0, W), y: rand(0, H), s: rand(20, 34),
+        vy: rand(0.8, 1.8), ph: rand(0, Math.PI * 2)
+      }));
+      smilesP = Array.from({ length: 28 }, () => ({
+        x: rand(0, W), y: rand(0, H), s: rand(20, 36),
+        vy: rand(0.6, 1.6), ph: rand(0, Math.PI * 2)
+      }));
+      const SHAPE_COLORS = ['#59b8ff', '#ff6b9d', '#ffd23f', '#7dff7a', '#b388ff', '#ff9d3c'];
+      shapesP = Array.from({ length: 34 }, () => ({
+        x: rand(0, W), y: rand(0, H), s: rand(12, 30), kind: Math.floor(rand(0, 4)),
+        vy: rand(0.6, 1.6), ph: rand(0, Math.PI * 2), a: rand(0, Math.PI * 2),
+        spin: rand(-0.03, 0.03), c: SHAPE_COLORS[Math.floor(rand(0, SHAPE_COLORS.length))]
+      }));
+      goldP = Array.from({ length: 150 }, () => ({
+        x: rand(0, W), y: rand(0, H), len: rand(10, 24), vy: rand(9, 17),
+        w: rand(1.5, 3), c: Math.random() < 0.5 ? '#ffd54a' : '#ffb300'
+      }));
+      const cols = Math.ceil(W / 20);
+      digits = Array.from({ length: cols * 2 }, () => ({
+        x: Math.floor(rand(0, cols)) * 20 + 4, y: rand(-H, H), vy: rand(2, 6),
+        ch: Math.floor(rand(0, 10)), a: rand(0.4, 1)
+      }));
+    }
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      initParticles();
+    }
+    window.addEventListener('resize', resize);
+
+    function frame() {
+      const anyOn = EFFECT_IDS.some(id => state.equipped[id] && state.inventory[id] > 0);
+      ctx.clearRect(0, 0, W, H);
+      if (!anyOn) { running = false; return; }
+
+      const darkBg = luma(state.bgColor) < 130;
+
+      if (state.equipped.snow && state.inventory.snow > 0) {
+        ctx.fillStyle = darkBg ? 'rgba(255,255,255,0.85)' : 'rgba(110,160,205,0.85)';
+        flakes.forEach(f => {
+          f.y += f.vy;
+          f.ph += 0.02;
+          f.x += Math.sin(f.ph) * f.sw;
+          if (f.y > H + 5) { f.y = -5; f.x = rand(0, W); }
+          if (f.x > W + 5) f.x = -5;
+          if (f.x < -5) f.x = W + 5;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      if (state.equipped.rain && state.inventory.rain > 0) {
+        ctx.strokeStyle = darkBg ? 'rgba(156,201,255,0.6)' : 'rgba(60,110,175,0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        drops.forEach(d => {
+          d.y += d.vy;
+          if (d.y > H + 30) { d.y = -30; d.x = rand(0, W); }
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - 2, d.y + d.len);
+        });
+        ctx.stroke();
+      }
+
+      if (state.equipped.digits && state.inventory.digits > 0) {
+        ctx.font = '16px monospace';
+        const rgb = darkBg ? '77,255,122' : '30,140,70';
+        digits.forEach(d => {
+          d.y += d.vy;
+          if (Math.random() < 0.05) d.ch = Math.floor(rand(0, 10));
+          if (d.y > H + 20) { d.y = rand(-200, -20); d.vy = rand(2, 6); }
+          ctx.fillStyle = 'rgba(' + rgb + ',' + d.a + ')';
+          ctx.fillText(d.ch, d.x, d.y);
+        });
+      }
+
+      if (state.equipped.clock && state.inventory.clock > 0) {
+        ctx.strokeStyle = darkBg ? 'rgba(255,210,63,0.85)' : 'rgba(170,110,0,0.8)';
+        ctx.lineWidth = 2;
+        clocks.forEach(c => {
+          c.y += c.vy;
+          c.a += c.spin;
+          if (c.y > H + c.r) { c.y = -c.r; c.x = rand(0, W); }
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+          // минутная и часовая стрелки
+          ctx.moveTo(c.x, c.y);
+          ctx.lineTo(c.x + Math.sin(c.a) * c.r * 0.8, c.y - Math.cos(c.a) * c.r * 0.8);
+          ctx.moveTo(c.x, c.y);
+          ctx.lineTo(c.x + Math.sin(c.a / 12) * c.r * 0.5, c.y - Math.cos(c.a / 12) * c.r * 0.5);
+          ctx.stroke();
+        });
+      }
+
+      if (state.equipped.clover && state.inventory.clover > 0) {
+        clovers.forEach(c => {
+          c.y += c.vy;
+          c.ph += 0.02;
+          c.x += Math.sin(c.ph) * 0.8;
+          if (c.y > H + c.s) { c.y = -c.s; c.x = rand(0, W); }
+          ctx.font = c.s + 'px serif';
+          ctx.fillText('🍀', c.x, c.y);
+        });
+      }
+
+      if (state.equipped.gears && state.inventory.gears > 0) {
+        gearsP.forEach(g => {
+          g.y += g.vy;
+          g.a += g.spin;
+          if (g.y > H + g.s) { g.y = -g.s; g.x = rand(0, W); }
+          ctx.save();
+          ctx.translate(g.x, g.y);
+          ctx.rotate(g.a);
+          ctx.font = g.s + 'px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('⚙️', 0, 0);
+          ctx.restore();
+        });
+      }
+
+      if (state.equipped.money && state.inventory.money > 0) {
+        ctx.font = '28px serif';
+        moneyP.forEach(m => {
+          m.y += m.vy;
+          m.ph += 0.03;
+          m.x += Math.sin(m.ph) * 1.2;
+          if (m.y > H + m.s) { m.y = -m.s; m.x = rand(0, W); }
+          ctx.font = m.s + 'px serif';
+          ctx.fillText('💵', m.x, m.y);
+        });
+      }
+
+      if (state.equipped.smile && state.inventory.smile > 0) {
+        smilesP.forEach(s => {
+          s.y += s.vy;
+          s.ph += 0.025;
+          s.x += Math.sin(s.ph) * 0.9;
+          if (s.y > H + s.s) { s.y = -s.s; s.x = rand(0, W); }
+          ctx.font = s.s + 'px serif';
+          ctx.fillText('😄', s.x, s.y);
+        });
+      }
+
+      if (state.equipped.shapes && state.inventory.shapes > 0) {
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        shapesP.forEach(p => {
+          p.y += p.vy;
+          p.ph += 0.02;
+          p.x += Math.sin(p.ph) * 0.7;
+          p.a += p.spin;
+          if (p.y > H + p.s) { p.y = -p.s; p.x = rand(0, W); }
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.a);
+          ctx.strokeStyle = p.c;
+          ctx.globalAlpha = 0.9;
+          ctx.beginPath();
+          const r = p.s / 2;
+          if (p.kind === 0) {            // треугольник
+            for (let i = 0; i < 3; i++) {
+              const t = -Math.PI / 2 + i * 2 * Math.PI / 3;
+              i ? ctx.lineTo(Math.cos(t) * r * 1.15, Math.sin(t) * r * 1.15) : ctx.moveTo(Math.cos(t) * r * 1.15, Math.sin(t) * r * 1.15);
+            }
+            ctx.closePath();
+          } else if (p.kind === 1) {     // квадрат
+            ctx.rect(-r, -r, p.s, p.s);
+          } else if (p.kind === 2) {     // круг
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+          } else {                       // шестиугольник
+            for (let i = 0; i < 6; i++) {
+              const t = i * Math.PI / 3;
+              i ? ctx.lineTo(Math.cos(t) * r, Math.sin(t) * r) : ctx.moveTo(Math.cos(t) * r, Math.sin(t) * r);
+            }
+            ctx.closePath();
+          }
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+
+      if (state.equipped.goldrain && state.inventory.goldrain > 0) {
+        ctx.lineCap = 'round';
+        goldP.forEach(d => {
+          d.y += d.vy;
+          if (d.y > H + d.len) { d.y = -d.len; d.x = rand(0, W); }
+          ctx.strokeStyle = d.c;
+          ctx.lineWidth = d.w;
+          ctx.globalAlpha = 0.9;
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - d.len * 0.12, d.y - d.len);
+          ctx.stroke();
+          ctx.fillStyle = '#fff3b0';          // блик на капле
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, d.w * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function updateEffects() {
+      const anyOn = EFFECT_IDS.some(id => state.equipped[id] && state.inventory[id] > 0);
+      if (anyOn && !running) {
+        running = true;
+        requestAnimationFrame(frame);
+      }
+    }
+
+    // ======================= РЕЙТИНГ =======================
+    const lbModal = document.getElementById('lb-modal');
+    const lbList = document.getElementById('lb-list');
+    let lbTab = 'count', lbData = null, lbBusy = false, lbTimer = 0, lbError = '';
+
+    function lbValue(v) {
+      return lbTab === 'count' ? Number(v).toLocaleString('ru-RU') : fmtLong(v);
+    }
+    function lbRow(rank, name, value, me) {
+      const row = document.createElement('div');
+      row.className = 'lb-row' + (me ? ' me' : '');
+      const rk = document.createElement('div');
+      rk.className = 'rk';
+      rk.textContent = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+      const nm = document.createElement('div');
+      nm.className = 'nm';
+      nm.textContent = name + (me ? ' (вы)' : '');
+      const val = document.createElement('div');
+      val.className = 'val';
+      val.textContent = lbValue(value);
+      row.append(rk, nm, val);
+      return row;
+    }
+    function lbMessage(text) {
+      const d = document.createElement('div');
+      d.className = 'empty';
+      d.textContent = text;
+      return d;
+    }
+    function renderLeaderboard() {
+      lbList.replaceChildren();
+      if (!lbData) { lbList.appendChild(lbMessage(lbError || 'Загрузка…')); return; }
+      const rows = (lbTab === 'count' ? lbData.by_count : lbData.by_time) || [];
+      if (!rows.length) { lbList.appendChild(lbMessage('Пока никого нет')); return; }
+      let meShown = false;
+      rows.forEach(r => {
+        const me = r.name === state.playerName;
+        if (me) meShown = true;
+        lbList.appendChild(lbRow(r.rank, r.name, r.value, me));
+      });
+      const m = lbData.me;
+      if (!meShown && m) {
+        const sep = document.createElement('div');
+        sep.className = 'lb-sep';
+        sep.textContent = '⋮';
+        lbList.append(sep, lbRow(
+          lbTab === 'count' ? m.count_rank : m.time_rank,
+          state.playerName,
+          lbTab === 'count' ? m.count : m.time,
+          true
+        ));
+      }
+    }
+    async function loadLeaderboard() {
+      if (lbBusy || !ready) return;
+      lbBusy = true;
+      await doHeartbeat(); // чтобы ваш счёт в рейтинге был свежим
+      const res = await call('get_leaderboard');
+      lbBusy = false;
+      if (res.ok) { lbData = res; lbError = ''; }
+      else if (!lbData) {
+        lbError = /get_leaderboard|function|schema cache/i.test(res.error || '')
+          ? 'Рейтинг не настроен на сервере: выполните leaderboard.sql в Supabase'
+          : errText(res.error);
+      }
+      if (lbModal.classList.contains('open')) renderLeaderboard();
+    }
+    function openLeaderboard() {
+      lbModal.classList.add('open');
+      renderLeaderboard();
+      loadLeaderboard();
+      clearInterval(lbTimer);
+      lbTimer = setInterval(() => { if (!document.hidden) loadLeaderboard(); }, 15000);
+    }
+    function closeLeaderboard() {
+      lbModal.classList.remove('open');
+      clearInterval(lbTimer);
+    }
+    document.getElementById('open-lb').addEventListener('click', openLeaderboard);
+    document.getElementById('close-lb').addEventListener('click', closeLeaderboard);
+    lbModal.addEventListener('click', e => { if (e.target === lbModal) closeLeaderboard(); });
+    document.querySelectorAll('#lb-modal .tab').forEach(t => t.addEventListener('click', () => {
+      lbTab = t.dataset.lb;
+      document.querySelectorAll('#lb-modal .tab').forEach(x => x.classList.toggle('active', x === t));
+      renderLeaderboard();
+    }));
+
+    // серверный учёт общего времени в игре (считается на сервере, только пока вкладка видна)
+    setInterval(() => {
+      if (ready && sb && !document.hidden) call('ping_time');
+    }, 10000);
+
+    // ======================= БАТТЛ ПАСС =======================
+    const BP_MAX = 30, BP_FIRST = 100, BP_STEP = 10, BP_FREE = 25, BP_PREM = 50, BP_PRICE = 300, BP_COL = 64, BP_ALL = (1 << 30) - 1;
+    Object.assign(ERRORS, {
+      locked: 'Этот уровень ещё не открыт', no_premium: 'Сначала купите премиум пасс',
+      bad_level: 'Некорректный уровень', nothing: 'Нет наград для получения'
+    });
+    const bpModal = document.getElementById('bp-modal');
+    const bpBtn = document.getElementById('open-bp');
+    const bpTrack = document.getElementById('bp-track');
+    const bpBuyBtn = document.getElementById('bp-buy');
+    const bpAllBtn = document.getElementById('bp-all');
+    const emeraldsEl = document.getElementById('emeralds');
+    let bpBusy = false, bpScrollPending = false;
+
+    // клики, нужные для перехода на уровень l: 100, 110, 120, ...
+    function bpNeed(l) { return BP_FIRST + BP_STEP * (l - 1); }
+    function bpInfo(clicks) {
+      let lvl = 0, acc = 0;
+      while (lvl < BP_MAX && acc + bpNeed(lvl + 1) <= clicks) { acc += bpNeed(lvl + 1); lvl++; }
+      return lvl >= BP_MAX ? { lvl, into: 0, need: 0 } : { lvl, into: clicks - acc, need: bpNeed(lvl + 1) };
+    }
+    function bpHas(mask, l) { return ((mask >> (l - 1)) & 1) === 1; }
+    function bpMk(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      return e;
+    }
+    function bpGem() { return bpMk('span', 'emr'); }
+
+    function bpTile(l, kind, amount, reached, claimed) {
+      const t = bpMk('div', 'bp-tile ' + kind);
+      if (l === BP_MAX) {
+        const fx = EFFECTS[kind === 'free' ? BP_EFFECT_FREE : BP_EFFECT_PREM];
+        t.append(bpMk('span', 'bp-fx', fx.icon), bpMk('span', null, '+' + amount));
+      } else t.append(bpGem(), bpMk('span', null, String(amount)));
+      const can = reached && !claimed;
+      if (claimed) { t.classList.add('claimed'); t.appendChild(bpMk('div', 'mark', '✓')); }
+      else if (!reached) t.classList.add('locked');
+      else t.classList.add('ready');
+      t.addEventListener('click', () => {
+        if (can) bpClaim(l, kind === 'free' ? 'free' : 'premium');
+        else if (!claimed) toast('Нужен уровень ' + l);
+      });
+      return t;
+    }
+
+    function bpBits(mask) { let n = 0; for (let l = 1; l <= BP_MAX; l++) if (bpHas(mask, l)) n++; return n; }
+    function bpFreeDone() { return (state.bpFree & BP_ALL) === BP_ALL; }
+    let bpBuyConfirm = false;
+
+    function renderBP() {
+      emeraldsEl.replaceChildren(bpGem(), document.createTextNode(' ' + state.emeralds));
+      const info = bpInfo(state.bpClicks);
+      const prem = state.bpPremium;
+      const mask = prem ? state.bpPrem : state.bpFree; // активный пасс: сначала бесплатный, после покупки — премиум
+      let claimable = 0;
+      for (let l = 1; l <= info.lvl; l++) if (!bpHas(mask, l)) claimable++;
+      bpBtn.classList.toggle('ready', claimable > 0);
+      if (!bpModal.classList.contains('open')) return;
+
+      document.getElementById('bp-title').textContent = prem ? 'Баттл пасс · Премиум' : 'Баттл пасс';
+      document.getElementById('bp-lvl').textContent = info.lvl;
+      const fill = document.getElementById('bp-fill'), txt = document.getElementById('bp-bar-text');
+      if (info.lvl >= BP_MAX) { fill.style.width = '100%'; txt.textContent = 'Максимальный уровень!'; }
+      else {
+        fill.style.width = (info.into / info.need * 100) + '%';
+        txt.textContent = 'До уровня ' + (info.lvl + 1) + ': ' + info.into + ' / ' + info.need + ' кликов';
+      }
+
+      const canBuy = !prem && bpFreeDone() && state.diamonds >= BP_PRICE;
+      if (!canBuy) bpBuyConfirm = false;
+      bpBuyBtn.hidden = prem;
+      bpBuyBtn.textContent = bpBuyConfirm ? 'Подтвердить: −' + BP_PRICE + ' 💎, прогресс с нуля' : 'Премиум за ' + BP_PRICE + ' 💎';
+      bpBuyBtn.disabled = bpBusy || !canBuy;
+      const note = document.getElementById('bp-note');
+      if (prem) note.textContent = 'Премиум пасс: награды ×2, на 30 уровне — «' + EFFECTS[BP_EFFECT_PREM].name + '»';
+      else if (!bpFreeDone()) note.textContent = 'Чтобы открыть премиум, заберите все награды бесплатного пасса (' + bpBits(state.bpFree) + '/' + BP_MAX + ')';
+      else if (state.diamonds < BP_PRICE) note.textContent = 'Бесплатный пасс пройден! Для премиума нужно ' + BP_PRICE + ' 💎 — прогресс начнётся заново';
+      else note.textContent = 'Бесплатный пасс пройден! Премиум начнётся заново с 1 уровня';
+      bpAllBtn.textContent = 'Забрать всё' + (claimable ? ' (' + claimable + ')' : '');
+      bpAllBtn.disabled = bpBusy || claimable === 0;
+
+      const frag = document.createDocumentFragment();
+      const side = bpMk('div', 'bp-side');
+      side.append(bpMk('div', 'sp'), bpMk('div', 'lab ' + (prem ? 'prem' : 'free'), prem ? 'Премиум' : 'Бесплатно'));
+      frag.appendChild(side);
+      for (let l = 1; l <= BP_MAX; l++) {
+        const reached = l <= info.lvl;
+        const col = bpMk('div', 'bp-col' + (l === info.lvl + 1 ? ' cur' : ''));
+        col.append(
+          bpMk('div', 'bp-num' + (reached ? ' done' : ''), String(l)),
+          bpTile(l, prem ? 'prem' : 'free', prem ? BP_PREM : BP_FREE, reached, bpHas(mask, l))
+        );
+        frag.appendChild(col);
+      }
+      bpTrack.replaceChildren(frag);
+      if (bpScrollPending) {
+        bpScrollPending = false;
+        bpTrack.scrollLeft = Math.max(0, (Math.max(1, info.lvl) - 1) * BP_COL - 40);
+      }
+    }
+
+    async function bpClaim(level, track) {
+      if (bpBusy) return;
+      bpBusy = true;
+      const sent = state.count;
+      const res = await call('bp_claim', { p_level: level, p_track: track, p_count: sent });
+      bpBusy = false;
+      if (res.state) applyServer(res.state, sent); else renderBP();
+      toast(res.ok ? '+' + (track === 'premium' ? BP_PREM : BP_FREE) + ' изумрудов' + (level === BP_MAX ? ' и эффект «' + EFFECTS[track === 'premium' ? BP_EFFECT_PREM : BP_EFFECT_FREE].name + '»' : '') : errText(res.error));
+    }
+    async function bpClaimAll() {
+      if (bpBusy) return;
+      bpBusy = true;
+      const sent = state.count;
+      const got = [];
+      if (bpInfo(state.bpClicks).lvl >= BP_MAX) {
+        if (!state.bpPremium && !bpHas(state.bpFree, BP_MAX)) got.push(EFFECTS[BP_EFFECT_FREE].name);
+        if (state.bpPremium && !bpHas(state.bpPrem, BP_MAX)) got.push(EFFECTS[BP_EFFECT_PREM].name);
+      }
+      const res = await call('bp_claim_all', { p_count: sent });
+      bpBusy = false;
+      if (res.state) applyServer(res.state, sent); else renderBP();
+      toast(res.ok ? '+' + res.gained + ' изумрудов' + (got.length ? ' и эффект: ' + got.join(', ') : '') : errText(res.error));
+    }
+    async function bpBuy() {
+      if (bpBusy || state.bpPremium || !bpFreeDone() || state.diamonds < BP_PRICE) return;
+      if (!bpBuyConfirm) { bpBuyConfirm = true; renderBP(); return; } // второе нажатие — подтверждение
+      bpBuyConfirm = false;
+      bpBusy = true;
+      renderBP();
+      const res = await call('bp_buy_premium');
+      bpBusy = false;
+      bpScrollPending = true;
+      if (res.state) applyServer(res.state); 
+      renderBP();
+      toast(res.ok ? 'Премиум пасс открыт! Прогресс начался заново' : errText(res.error));
+    }
+
+    bpBtn.addEventListener('click', () => {
+      bpScrollPending = true;
+      bpBuyConfirm = false;
+      bpModal.classList.add('open');
+      renderBP();
+      doHeartbeat(); // подтянуть свежие клики с сервера
+    });
+    document.getElementById('close-bp').addEventListener('click', () => bpModal.classList.remove('open'));
+    bpModal.addEventListener('mousedown', e => { if (e.target === bpModal) bpModal.classList.remove('open'); });
+    bpBuyBtn.addEventListener('click', bpBuy);
+    bpAllBtn.addEventListener('click', bpClaimAll);
+
+    // ======================= КОДЫ =======================
+    (function () {
+      const ADMIN = 'TestBot'; // только этот игрок видит вкладку создания (на сервере тоже проверяется)
+      Object.assign(ERRORS, {
+        bad_code: 'Такого кода нет', used: 'Вы уже активировали этот код',
+        exhausted: 'Код больше не действует', forbidden: 'Создавать коды может только ' + ADMIN,
+        code_exists: 'Такой код уже существует', bad_reward: 'Некорректная награда'
+      });
+      const $ = id => document.getElementById(id);
+      const modal = $('codes-modal'), input = $('code-input'), submit = $('code-submit'), msgEl = $('code-msg');
+      const tabsEl = $('codes-tabs'), paneRedeem = $('codes-redeem'), paneCreate = $('codes-create');
+      const newCode = $('new-code'), newType = $('new-type'), newEffect = $('new-effect'), newCase = $('new-case');
+      const newAmount = $('new-amount'), newMax = $('new-max'), listEl = $('codes-list');
+
+      function rewardLabel(type, amount, effect) {
+        if (type === 'effect') {
+          const e = EFFECTS[effect];
+          return (e ? e.icon + ' ' + e.name : '✨ Эффект') + (amount > 1 ? ' ×' + amount : '');
+        }
+        if (type === 'cases') return (effect === 'gear' ? '⚙️ Ящики механизмов: ' : '📦 Ящики эффектов: ') + amount;
+        return ({ diamonds: '💎 Алмазы: ' + amount, clicks: '🖱️ Клики: ' + amount })[type] || type;
+      }
+      function tallyText(t) {
+        return Object.entries(t).map(([id, n]) => (EFFECTS[id] ? EFFECTS[id].icon + ' ' + EFFECTS[id].name : id) + ' ×' + n).join(', ');
+      }
+      function msg(text, isErr) { msgEl.textContent = text; msgEl.classList.toggle('err', !!isErr); }
+
+      function setTab(tab) {
+        document.querySelectorAll('#codes-tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.ctab === tab));
+        paneRedeem.hidden = tab !== 'redeem';
+        paneCreate.hidden = tab !== 'create';
+        if (tab === 'create') loadList();
+      }
+      document.querySelectorAll('#codes-tabs .tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.ctab)));
+
+      $('open-codes').addEventListener('click', () => {
+        tabsEl.hidden = state.playerName !== ADMIN;
+        setTab('redeem');
+        msg('', false);
+        modal.classList.add('open');
+        input.focus();
+      });
+      $('close-codes').addEventListener('click', () => modal.classList.remove('open'));
+      modal.addEventListener('mousedown', e => { if (e.target === modal) modal.classList.remove('open'); });
+
+      // ---------- ввод кода ----------
+      let busy = false;
+      input.addEventListener('input', () => { input.value = input.value.replace(/[^A-Za-z0-9_-]/g, ''); msg('', false); });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') redeem(); });
+      submit.addEventListener('click', redeem);
+
+      async function redeem() {
+        const code = input.value.trim().toUpperCase();
+        if (!code || busy) return;
+        busy = submit.disabled = true;
+        msg('', false);
+        await doHeartbeat(); // сначала синхронизируем клики с сервером
+        const sent = state.count;
+        const res = await call('redeem_code', { p_code: code });
+        busy = submit.disabled = false;
+        if (!res.ok) { msg(errText(res.error), true); return; }
+        if (res.reward_type === 'clicks') applyServer(res.state, sent);
+        else applyServer(res.state);
+        input.value = '';
+        let t = 'Получено: ' + rewardLabel(res.reward_type, res.amount, res.effect);
+        if (res.reward_type === 'cases' && res.cases) t += ' → ' + tallyText(res.cases);
+        msg(t, false);
+      }
+
+      // ---------- создание кодов (TestBot) ----------
+      newType.addEventListener('change', () => {
+        newEffect.hidden = newType.value !== 'effect';
+        newCase.hidden = newType.value !== 'cases';
+      });
+      newCode.addEventListener('input', () => { newCode.value = newCode.value.replace(/[^A-Za-z0-9_-]/g, ''); });
+
+      function randomCode() {
+        const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let s = '';
+        for (let i = 0; i < 8; i++) s += a[Math.floor(Math.random() * a.length)];
+        return s;
+      }
+
+      $('code-create').addEventListener('click', async () => {
+        const code = (newCode.value.trim() || randomCode()).toUpperCase();
+        const amount = parseInt(newAmount.value, 10), maxUses = parseInt(newMax.value, 10);
+        if (!(amount > 0)) { toast('Укажите количество больше нуля'); return; }
+        if (!(maxUses >= 0)) { toast('Лимит активаций: 0 или больше'); return; }
+        const res = await call('create_code', {
+          p_code: code, p_type: newType.value, p_amount: amount,
+          p_effect: newType.value === 'effect' ? newEffect.value : (newType.value === 'cases' && newCase.value ? newCase.value : null),
+          p_max_uses: maxUses
+        });
+        if (!res.ok) { toast(errText(res.error)); return; }
+        newCode.value = '';
+        toast('Код создан: ' + code);
+        loadList();
+      });
+
+      async function loadList() {
+        const res = await call('list_codes');
+        listEl.replaceChildren();
+        if (!res.ok || !res.codes || !res.codes.length) {
+          const p = document.createElement('div');
+          p.className = 'empty';
+          p.textContent = res.ok ? 'Кодов пока нет' : errText(res.error);
+          listEl.appendChild(p);
+          return;
+        }
+        res.codes.forEach(c => {
+          const row = document.createElement('div');
+          row.className = 'code-item';
+          const info = document.createElement('div');
+          info.className = 'ci';
+          const b = document.createElement('b');
+          b.textContent = c.code;
+          b.title = 'Нажмите, чтобы скопировать';
+          b.addEventListener('click', () => {
+            try { navigator.clipboard.writeText(c.code); toast('Скопировано: ' + c.code); } catch (e) {}
+          });
+          const small = document.createElement('small');
+          small.textContent = rewardLabel(c.reward_type, c.amount, c.effect) + ' · активаций: ' + c.uses + ' / ' + (c.max_uses > 0 ? c.max_uses : '∞');
+          info.append(b, small);
+          const del = document.createElement('button');
+          del.textContent = 'Удалить';
+          del.addEventListener('click', async () => {
+            const r = await call('delete_code', { p_code: c.code });
+            if (!r.ok) toast(errText(r.error));
+            loadList();
+          });
+          row.append(info, del);
+          listEl.appendChild(row);
+        });
+      }
+    })();
+
+    // ======================= ИССЛЕДОВАНИЕ ИГРОКА =======================
+    (function () {
+      Object.assign(ERRORS, { no_player: 'Игрок с таким именем не найден' });
+      const modal = document.getElementById('inspect-modal');
+      const input = document.getElementById('in-name');
+      const go = document.getElementById('in-go');
+      const out = document.getElementById('in-result');
+      let busy = false;
+
+      function stat(label, value) {
+        const d = document.createElement('div');
+        d.className = 'in-stat';
+        const s = document.createElement('small'); s.textContent = label;
+        const b = document.createElement('b'); b.textContent = value;
+        d.append(s, b);
+        return d;
+      }
+
+      function show(p) {
+        out.replaceChildren();
+        const head = document.createElement('div');
+        head.className = 'in-head';
+        head.textContent = '👤 ' + p.name;
+        out.appendChild(head);
+
+        const stats = document.createElement('div');
+        stats.className = 'in-stats';
+        stats.append(
+          stat('🖱️ Клики', Number(p.count || 0).toLocaleString('ru-RU')),
+          stat('💎 Алмазы', Number(p.diamonds || 0).toLocaleString('ru-RU')),
+          stat('⏱️ Время в игре', fmtLong(p.time || 0))
+        );
+        out.appendChild(stats);
+
+        const title = document.createElement('div');
+        title.className = 'tr-section';
+        title.textContent = 'Эффекты';
+        out.appendChild(title);
+
+        const inv = p.inventory || {};
+        const owned = Object.keys(inv).filter(id => (inv[id] || 0) > 0);
+        if (!owned.length) { out.appendChild(emptyEl('Эффектов нет')); return; }
+        owned.forEach(id => {
+          const e = EFFECTS[id] || { name: id, icon: '✨', color: '#888' };
+          const row = document.createElement('div');
+          row.className = 'inv-item';
+          row.style.setProperty('--rc', e.color);
+          const ic = document.createElement('div'); ic.className = 'ic'; ic.textContent = e.icon;
+          const nm = document.createElement('div'); nm.className = 'nm';
+          nm.textContent = e.name + (inv[id] > 1 ? ' ×' + inv[id] : '');
+          row.append(ic, nm);
+          out.appendChild(row);
+        });
+      }
+
+      async function search() {
+        const name = input.value.trim();
+        if (busy) return;
+        if (!NAME_RE.test(name)) { out.replaceChildren(emptyEl(errText('bad_name'))); return; }
+        busy = go.disabled = true;
+        out.replaceChildren(emptyEl('Загрузка…'));
+        const res = await call('inspect_player', { p_name: name });
+        busy = go.disabled = false;
+        if (!res.ok) {
+          const missing = /inspect_player|function|schema cache/i.test(res.error || '');
+          out.replaceChildren(emptyEl(missing
+            ? 'Исследование не настроено на сервере: выполните inspect_player.sql в Supabase'
+            : errText(res.error)));
+          return;
+        }
+        show(res.player);
+      }
+
+      input.addEventListener('input', () => { input.value = input.value.replace(/[^A-Za-z0-9_]/g, ''); });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+      go.addEventListener('click', search);
+      document.getElementById('open-inspect').addEventListener('click', () => {
+        modal.classList.add('open');
+        input.focus();
+      });
+      document.getElementById('close-inspect').addEventListener('click', () => modal.classList.remove('open'));
+      modal.addEventListener('mousedown', e => { if (e.target === modal) modal.classList.remove('open'); });
+    })();
+
+    // ======================= АККАУНТ (перенос между устройствами) =======================
+    (function () {
+      const $ = id => document.getElementById(id);
+      const modal = $('acct-modal'), out = $('acct-code-out'), inp = $('acct-code-in'), msgEl = $('acct-msg');
+      const showBtn = $('acct-show'), loginBtn = $('acct-login');
+      function msg(t, err) { msgEl.textContent = t; msgEl.classList.toggle('err', !!err); }
+
+      window.openAccount = function () {
+        $('acct-export').hidden = !ready;
+        out.value = ''; inp.value = ''; msg('', false);
+        modal.classList.add('open');
+      };
+      $('open-acct').addEventListener('click', window.openAccount);
+      $('close-acct').addEventListener('click', () => modal.classList.remove('open'));
+      modal.addEventListener('mousedown', e => { if (e.target === modal) modal.classList.remove('open'); });
+
+      showBtn.addEventListener('click', async () => {
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (!session) { msg('Нет активной сессии, обновите страницу', true); return; }
+          out.value = session.refresh_token;
+          out.focus(); out.select();
+          try { await navigator.clipboard.writeText(session.refresh_token); msg('Код скопирован. Сохраните его в надёжном месте.', false); }
+          catch (e) { msg('Выделите код и скопируйте его вручную.', false); }
+        } catch (e) { msg('Не удалось получить код', true); }
+      });
+
+      loginBtn.addEventListener('click', async () => {
+        const code = inp.value.trim();
+        if (!code) { msg('Вставьте код входа', true); return; }
+        if (ready && !confirm('Текущий аккаунт (' + state.playerName + ') на этом устройстве будет заменён. Если у вас нет его кода входа, вы потеряете к нему доступ. Продолжить?')) return;
+        loginBtn.disabled = true; msg('Входим…', false);
+        try {
+          if (!sb) throw new Error('нет связи с сервером');
+          const r = await sb.auth.refreshSession({ refresh_token: code });
+          if (r.error || !r.data || !r.data.session) throw new Error('код неверный или устарел');
+          location.reload();
+        } catch (e) {
+          loginBtn.disabled = false;
+          msg('Не удалось войти: ' + (e && e.message || e), true);
+        }
+      });
+    })();
+
+    // ======================= АВТО-ОБНОВЛЕНИЕ =======================
+    // Игра сама сравнивает загруженную версию файла с тем, что сейчас лежит на хостинге.
+    // Номера версий вести не нужно: выложили новый файл — у всех онлайн появится окно «Обновить».
+    (function () {
+      if (!/^https?:$/.test(location.protocol)) return; // с file:// не работает
+      const modal = document.getElementById('update-modal');
+      document.getElementById('update-btn').addEventListener('click', () => {
+        location.href = location.pathname + '?v=' + Date.now();
+      });
+      function hash(t) {
+        let h = 5381;
+        for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+        return h + ':' + t.length;
+      }
+      async function fingerprint() {
+        const r = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error('http ' + r.status);
+        return hash(await r.text());
+      }
+      let base = null, done = false;
+      async function check() {
+        if (done) return;
+        try {
+          const f = await fingerprint();
+          if (base === null) base = f;
+          else if (f !== base) { done = true; modal.classList.add('open'); }
+        } catch (e) {}
+      }
+      check();
+      setInterval(() => { if (!document.hidden) check(); }, 120000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+    })();
+
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+
+    resize();
+    render();
+    updateLock();
+    if (lockLeft() > 0) acModal.classList.add('open');
+    boot();
+  </script>
+</body>
+</html>
